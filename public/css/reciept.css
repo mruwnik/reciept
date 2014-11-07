@@ -1,0 +1,124 @@
+#header{
+    width: 100%;
+    overflow: hidden;
+}
+#header .right{
+    float: right;
+    margin-left: 10px;
+}
+#header .current-page{
+    background-color: aqua;
+}
+
+.stats-container{
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.stats-container .info{
+    float: left;
+    margin-right: 50px;
+}
+
+.letter span{
+    display: inline-block;
+}
+
+.letter span.axis{
+    background-color: aqua;
+}
+/*
+.letter .letter-pic{
+    background-color: aqua;
+    width: auto;
+    height: auto;
+}
+*/
+
+.reciepts .reciept-data{
+    font-weight: bold;
+    cursor: pointer;
+    background-color: aqua;
+    padding: 5px;
+}
+
+.reciepts .reciept span{
+    display: inline-block;
+}
+.reciepts .reciept .amount{
+    float: right;
+    text-align: right;
+    width: 200px;
+}
+.reciepts .reciept .description{
+    width: 300px;
+}
+.reciepts .reciept .shop{
+    width: 150px;
+}
+
+.reciept.active .costs{
+    display: block;
+}
+.reciept .costs{
+    padding: 10px;
+    margin-left: 50px;
+    font-weight: normal;
+    display: none;
+}
+.reciepts .reciept .costs .description{
+    width: 397px;
+}
+
+.reciepts .reciept .costs .time{
+    margin-right: 20px;
+}
+.reciepts .reciept .costs .delete/*,
+.reciepts .reciept .costs button.edit,
+.reciepts .reciept .costs button.save*/{
+    float: right;
+    margin-right: 30px;
+}
+
+input.error {
+    border: 1px solid #FF0000;
+}
+label.error {
+    color: #FF0000;
+}
+
+.tabs-container .tab{
+    display: inline-block;
+    width: 100px;
+    padding: 5px 10px;
+    border: 1px solid gray;
+    border-bottom: 0px none gray;
+    background-color: silver;
+    cursor: pointer;
+}
+
+.tabs-container .tab.active{
+    background-color: white;
+}
+
+.tabs-container .tab-contents{
+    display: none;
+    border: 1px solid gray;
+}
+.tabs-container .tab-contents.active{
+    display: block;
+}
+
+.hidden{
+    display: none;
+}
+
+.reciepts .cost.edit .cost-data,
+.reciepts .cost .edit-cost{
+    display: none;
+}
+
+.reciepts .cost .cost-data,
+.reciepts .cost.edit .edit-cost{
+    display: block;
+}
