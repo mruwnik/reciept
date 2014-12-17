@@ -263,45 +263,6 @@ page))
 				  (eq link page))
 		   (cl-who:fmt (get-page-link link))))))))
 
-(hunchentoot:define-easy-handler (start-page-handler 
-				  :uri (get-page-address :start-page))
-    ((from :parameter-type 'integer)
-     (to :parameter-type 'integer)
-     (groups :parameter-type 
-	     #'(lambda (list) 
-		 (let ((result ()))
-		   (dolist (val (hunchentoot:post-parameters hunchentoot:*request*))
-		     (when (equalp "groups" (car val))
-			 (setq result (cons (make-keyword (cdr val)) result))))
-		   result)))
-     (sort-by :parameter-type #'(lambda (str) (if (equal "" str) NIL str)))
-     (sort-dir :parameter-type #'(lambda (str) (if (equal "" str) NIL str)))
-     (view :parameter-type 'make-keyword :init-form :show-reciepts))
-  (with-auth (user userid)
-    (standard-page view
-	'("http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css"
-	  "/css/reciept.css") 
-	`("http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
-	  "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"
-	  "/js/jquery.validate.js"
-	  "/js/mustache.js"
-	  ,(format NIL "/templates/mustache-templates?page=~a" :start-page)
-	  "/js/costs.js")
-	  (cl-who:fmt (get-header userid))
-	  (cl-who:fmt (get-add-reciept-form))
-	  :br :br
-	  (cl-who:fmt
-	   (make-link (get-page-address :undo) 
-		      (get-page-link-name :undo)
-		      (unless (> (avaiable-undos userid) 0) "hidden")
-		      "undo-link"))
-	  (cl-who:fmt
-	   (make-tabs `(("reciepts" ,(equal :show-reciepts view)
-				    ,(get-reciepts userid))
-			("costs" ,(equal :show-costs view)
-				 ,(get-costs userid
-					     :sort-by sort-by :sort-dir sort-dir))))))))
-
 (hunchentoot:define-easy-handler (undo-handler 
 				  :uri (get-page-address :undo))
     ()
@@ -445,6 +406,10 @@ page))
 	(:link :rel "stylesheet" :href "/css/reciept.css")
 	(:script 
 	 :src "https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.1/angular.js")
+	(:script 
+	 :src "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")
+	(:script 
+	 :src "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js")
 	(:script 
 	 :src (get-page-address :reciepts-controller)))
        (:body

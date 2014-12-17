@@ -173,15 +173,41 @@
 					  (getprop (chain selected costs) id) "edit") t))))
 		       (setf (chain $scope save-cost)
 			     (lambda(id)
-			       (if (getprop 
-				    (getprop (chain selected costs) id)
-				    "edit")
-				   (setf (getprop 
-				    (getprop (chain selected costs) id)
-				    "edit") NIL)
-				   (setf (getprop 
-					  (getprop (chain selected costs) id) "edit") t))))
-))))
+			       (setf cost (getprop (chain selected costs) id))
+			       (setf groups '())
+			       (for-in (k (@ cost groups))
+				 (when (getprop (chain cost groups) k)
+				   (chain groups (push k))))
+				(chain $ 
+				       (post
+					(lisp (get-page-address :add-cost))
+					(create
+					 :ajax T
+					 :id (chain cost id)
+					 :reciept-id (chain selected id)
+					 :amount (chain cost amount)
+					 :description (@ cost description)
+					 :groups groups
+					 :new-groups (@ cost newGroups))
+				       (lambda(data)
+					 (chain $scope ($apply
+							(lambda()
+							(setf 
+
+							 (chain selected amount)
+							 (chain data 0 costs 0))
+							(setf
+							 (@ cost groupslist)
+							 groups)
+						(if (getprop 
+						     (getprop (chain selected costs) id)
+						     "edit")
+						    (setf (getprop 
+							   (getprop (chain selected costs) id)
+							   "edit") NIL)
+						    (setf (getprop 
+							   (getprop (chain selected costs) id) "edit") t))))))))))
+				       ))))
 
       (defun remove-if-not (pred objs)
 	(defvar result (array))

@@ -8,6 +8,7 @@
 			(hunchentoot:post-parameters 
 			 hunchentoot:*request*)))))
 
+
 (hunchentoot:define-easy-handler (costs-handler 
 				  :uri (get-page-address :show-costs))
     ()
@@ -33,7 +34,7 @@
 		       (mapcar 'make-keyword (split-str groups ",")))))
      (ajax :request-type :post :parameter-type 'boolean))
   (with-auth (user userid)
-    (let ((groups (append (funcall (get-url-groups "groups"))
+    (let ((groups (append (get-url-groups "groups[]")
 			  new-groups)))
       (when (eq :POST (hunchentoot:request-method hunchentoot:*request*))
 	(let ((cost (if id
@@ -43,9 +44,11 @@
 				  :currency currency
 				  :groups groups
 				  :reciept reciept-id))))
-	  (if ajax 
-	      (edit-operation-result userid NIL (list cost)
-				     (get-currency currency))
+	  (if ajax
+	      (progn
+		(setf (hunchentoot:content-type*) "application/json")
+		(edit-operation-result userid NIL (list cost)
+				     (get-currency currency)))
 	      (redirect :start-page)))))))
 
 
