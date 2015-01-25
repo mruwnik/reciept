@@ -84,13 +84,12 @@
 	     (receipt (add-reciept reciept-desc userid
 			      :printed timestamp :shop reciept-shop)))
 	(dolist (id cost-id)
-	  (unless (empty (hunchentoot:post-parameter
+      	  (unless (empty (hunchentoot:post-parameter
 				       (format NIL "amount~a" id)))
 	    (add-cost (hunchentoot:post-parameter
 		       (format NIL "description~a" id))
-		      (- (parse-integer 
-			  (hunchentoot:post-parameter (format NIL "amount~a" id))
-			  :junk-allowed t))
+		      (- (read-from-string  
+			   (hunchentoot:post-parameter (format NIL "amount~a" id))))
 		      userid
 		      :currency currency
 		      :groups (unless (empty (hunchentoot:post-parameter
@@ -104,9 +103,8 @@
 		      :reciept (id receipt))))
 	(unless (empty (hunchentoot:post-parameter "amount"))
 	  (add-cost (hunchentoot:post-parameter "description")
-		    (- (parse-integer 
-			(hunchentoot:post-parameter "amount")
-			:junk-allowed t))
+		    (- (read-from-string 
+			(hunchentoot:post-parameter "amount")))
 		    userid
 		    :currency currency
 		    :groups (if new-groups
@@ -115,7 +113,6 @@
 		    :timestamp timestamp
 		    :reciept (id receipt)))))
       (redirect :show-reciepts)))
-
 
 (hunchentoot:define-easy-handler (get-costs-handler 
 				  :uri (get-page-address :get-costs))
@@ -236,7 +233,7 @@
 			    :value "{{newCost.description}}" 
 			    :name "description{{newCost.id}}")
 		    (:label "amount:")
-		    (:input :class "cost-amount" :type "number" 
+		    (:input :class "cost-amount" :type "text" 
 			    :value "{{newCost.amount}}" 
 			    :name "amount{{newCost.id}}")
 		    (:span :class "cost-groups" 

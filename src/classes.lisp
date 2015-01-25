@@ -138,9 +138,10 @@
   (:table-name costs)(:keys id))
 
 (defun get-groups (cost)
-  (if (stringp (groups cost))
-      (read-from-string (groups cost))
-      (groups cost)))
+  (when cost
+    (if (stringp (groups cost))
+	(read-from-string (groups cost))
+	(groups cost))))
 
 (defun get-uni-timestamp (cost)
   "returns the given costs timestamp as a simple-date:timestamp"

@@ -1,5 +1,15 @@
-add currency validation
+auto get database url
+add currency validation + amount update
+edit costs groups not working
+set time to current time, not last used time
+set groups for whole reciept
+sortable columns
+
+shop autocomplete
+enter in amount adds extra cost row
+mulitplier
 regular db backups
 csv export
 regular csv export
+
 configurable header
