@@ -21,7 +21,6 @@
 
 ;; ugly hack to let heroku know where the database is
 (setf *database-url* "postgres://iitwacttphsvvf:c1urpCZ1bPXwlIHJwrnRZu1v0F@ec2-54-243-51-102.compute-1.amazonaws.com:5432/d7vgbt52t93ltc")
-;;
 
 (defparameter *local-db-params* (list "costs" "dan" "password" "localhost"))
 

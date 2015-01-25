@@ -380,7 +380,7 @@ page))
   (with-output-to-string (stream)
     (cl-json:encode-json
      `#( (("userid" . ,userid)
-	  ("costs" . ,(mapcar 'id costs))
+	  ("costs" .  ,costs)
 	  ("reciepts" . ,reciept-ids)
 	  ("amount" . ,(when costs
 	     `(("total-amount" . ,(getf

@@ -21,10 +21,6 @@
 (defmethod to-json ((cost cost))
   `(("id" . ,(id cost))
     ("description" . ,(description cost))
-    ("strAmount" . ,(format NIL "~a ~a"
-			 (print-money (get-currency cost)
-				      (amount cost))
-			 (get-currency cost)))
     ("amount" . ,(amount cost))
     ("currency" . ,(get-currency cost))
     ("timestamp" . ,(timestamp-to-json-timestamp (timestamp cost)))
@@ -193,9 +189,13 @@
 					 (chain $scope ($apply
 							(lambda()
 							(setf 
-
 							 (chain selected amount)
-							 (chain data 0 costs 0))
+							 (+ 
+							  (chain selected amount)
+							  (chain data 0 costs 0 amount)))
+							(setf 
+							 (chain cost amount)
+							 (chain data 0 costs 0 amount))
 							(setf
 							 (@ cost groupslist)
 							 groups)
