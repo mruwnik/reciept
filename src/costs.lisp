@@ -38,7 +38,7 @@
 			  new-groups)))
       (when (eq :POST (hunchentoot:request-method hunchentoot:*request*))
 	(let ((cost (if id
-			(edit-cost id description (- amount)
+			(edit-cost id description amount
 				   :groups (if groups groups '(:NONE)))
 			(add-cost description (- amount) userid
 				  :currency currency
@@ -182,7 +182,7 @@
     (:input :type "text" :name "description" :value desc 
 	    :ng-model "cost.description" ) 
     (:label "amount:")
-    (:input :type "number" :name "amount" :value amount
+    (:input :type "text" :name "amount" :value amount
 	    :ng-model "cost.amount") :br
     (:label "groups")
     (:div :class "group-checkboxes"
