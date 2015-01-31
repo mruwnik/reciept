@@ -254,6 +254,7 @@
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
     (:div 
      :ng-controller "RecieptsListCtrl" :class "reciepts"
+     (:div (ccl:getenv "DATABASE_URL"))
      (:div 
       :ng-repeat "reciept in reciepts | orderBy:recieptsOrder"
       (:div 

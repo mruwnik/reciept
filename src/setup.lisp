@@ -2,9 +2,6 @@
 
 (setf *random-state* (make-random-state t))
 
-(defun getenv (target)
-  #+ccl (ccl:getenv target)
-  #+sbcl (sb-posix:getenv target))
 
 (defun get-base-dir ()
   (concatenate 'string (getenv "HOME") "/"))
@@ -17,17 +14,16 @@
 
 (defun use-real-database () t)
 
-(defparameter *database-url* (getenv "DATABASE_URL"))
-
-;; ugly hack to let heroku know where the database is
-(setf *database-url* "postgres://epbhvcwifasees:8bLqWnAZL46bjGp0F03tQRNe9G@ec2-23-21-154-37.compute-1.amazonaws.com:5432/d3cjqaed1toe5j")
+(defun database-url () 
+  (or (ccl:getenv "DATABASE_URL")
+      "postgres://epbhvcwifasees:8bLqWnAZL46bjGp0F03tQRNe9G@ec2-23-21-154-37.compute-1.amazonaws.com:5432/d3cjqaed1toe5j"))
 
 (defparameter *local-db-params* (list "costs" "dan" "password" "localhost"))
 
 (defun db-params ()
   "Heroku database url format is postgres://username:password@host/database_name. If we are testing on localhost, use the db-parameters from *local-db-params*."
-  (if *database-url*
-      (let* ((url (second (cl-ppcre:split "//" *database-url*)))
+  (if (database-url)
+      (let* ((url (second (cl-ppcre:split "//" (database-url))))
 	     (user (first (cl-ppcre:split ":" (first (cl-ppcre:split "@" url)))))
 	     (password (second (cl-ppcre:split ":" (first (cl-ppcre:split "@" url)))))
 	     (host (first (cl-ppcre:split ":" (first (cl-ppcre:split "/" (second (cl-ppcre:split "@" url)))))))
