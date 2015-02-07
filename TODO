@@ -1,8 +1,6 @@
 auto get database url
-add currency validation + amount update
-edit costs groups not working
+add currency validation
 set time to current time, not last used time
-reverse groups display sorting
 set groups for whole reciept
 sortable columns
 

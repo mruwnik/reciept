@@ -140,7 +140,7 @@
 (defun get-groups (cost)
   (when cost
     (if (stringp (groups cost))
-	(read-from-string (groups cost))
+	(setf (groups cost) (read-from-string (groups cost)))
 	(groups cost))))
 
 (defun get-uni-timestamp (cost)

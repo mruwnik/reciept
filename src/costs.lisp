@@ -112,7 +112,7 @@
 				groups)
 		    :timestamp timestamp
 		    :reciept (id receipt)))))
-      (redirect :show-reciepts)))
+    (redirect :show-reciepts)))
 
 (hunchentoot:define-easy-handler (get-costs-handler 
 				  :uri (get-page-address :get-costs))
@@ -205,16 +205,17 @@
 	     :id "add-reciept-form" :ng-controller "AddRecieptCtrl"
 	     (:div :class "reciept-header"
 		   (:label "amount")
-		   (:span :id "reciept-amount" "0")
+		   (:span :id "reciept-amount" 
+			  "{{ total(newCosts) | number : 2 }}")
 		   (:label "description")
 		   (:input :type "text" :name "reciept-desc")
 		   (:label "shop")
 		   (:input :type "text" :name "reciept-shop")
 		   (:label "date")
 		   (:input :type "text" :id "reciept-date" 
-			   :name "reciept-date" 
-			   :value (format NIL "~2,'0d/~2,'0d/~d"
-					  date month year)
+			   :name "reciept-date"
+			   :value "{{date | date:\"dd/MM/yyyy\"}}"
+			   :placeholder "dd/MM/yyyy"
 			   :ng-pattern "/^\d{2}/\d{2}/\d{4}$/")
 		   (:label "time")
 		   (:input :type "text" :id "reciept-time" 
@@ -254,8 +255,7 @@
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
     (:div 
      :ng-controller "RecieptsListCtrl" :class "reciepts"
-     (:div (ccl:getenv "DATABASE_URL"))
-     (:div 
+      (:div 
       :ng-repeat "reciept in reciepts | orderBy:recieptsOrder"
       (:div 
        :class "reciept" :id "{{reciept.id}}" 
@@ -369,4 +369,3 @@
 	    (get-user-costs userId))
 		 collecting (to-json cost)))
 	stream)))))
-

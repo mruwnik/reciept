@@ -68,30 +68,39 @@ function prev (getf current field), where prev is the value calculated for the p
 			   (getf b field))))
 	  costs :initial-value initial-value))
 
+(defun get-days-in-month (month)
+  (cond
+    ((= month 2) 28)
+    ((or (= month 4) (= month 6) (= month 9) (= month 11)) 30)
+    (T 31)))
+
+
 (defun get-spending-statistics(user &optional 
 				      (currency 
 				       (get-user-default-currency user)))
   (with-date
-      (:day date)
+      (:day date :month month)
     (let* ((costs (remove-if-not 
 		   #'(lambda(cost)(equal (get-currency cost)
 					 currency))
 		   (get-this-months-costs user)))
 	   (total (cost-reduce user :raw-costs costs))
-	   (rent (cost-reduce user :groups '(:RENT) :raw-costs costs))
-	   (equipment (cost-reduce user :groups '(:EQUIPMENT) 
+	   (rent (cost-reduce user :groups '(:RENT :INVESTMENTS) :raw-costs costs))
+	   (ola (cost-reduce user :groups '(:OLA) 
 				   :raw-costs costs))
-	   (food (cost-reduce user :groups '(:FOOD) :raw-costs costs))
+	   (food (cost-reduce user :groups '(:JEDZENIE) :raw-costs costs))
+	   (school (cost-reduce user :groups '(:SZKOŁA) :raw-costs costs))
 	   (without-rent (- total rent))
 	   (avg-cost (/ without-rent date)))
-      `(("total expenses" . ,(print-money currency total))
-	 ("expenses wo/ rent" . ,(print-money currency without-rent))
-	 ("avg expendure" . ,(print-money currency avg-cost))
-	 ("equipment costs" . ,(print-money currency equipment))
-	 ("food costs" . ,(print-money currency food))
-	 ("projected cost" . 
-		  ,(format NIL "~a (~a)" (print-money currency (+ rent (* avg-cost 31)))
-			   (print-money currency (* avg-cost (get-days-in-month))))
+      `(("suma wydatków" . ,(print-money currency total))
+	("wydatki nie stałe" . ,(print-money currency without-rent))
+	("średni wydatek" . ,(print-money currency avg-cost))
+	("Ola" . ,(print-money currency ola))
+	("szkoła" . ,(print-money currency school))
+	("jedzenie" . ,(print-money currency food))
+	("szacowany koszt" . 
+		  ,(format NIL "~a (~a)" (print-money currency (+ rent (* avg-cost (get-days-in-month month))))
+			   (print-money currency (* avg-cost (get-days-in-month month))))
 	 )))))
 
 ;; ###### helper functions

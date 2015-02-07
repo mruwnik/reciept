@@ -13,7 +13,6 @@
 		(list (create-regex-dispatcher
 		       "^/data/(.*?)\.json$" 'json-data-handler))))
 
-
 (defun timestamp-to-json-timestamp(timestamp)
   (* (simple-date:timestamp-to-universal-time timestamp) 1000))
 (defgeneric to-json (object)
@@ -24,8 +23,7 @@
     ("amount" . ,(amount cost))
     ("currency" . ,(get-currency cost))
     ("timestamp" . ,(timestamp-to-json-timestamp (timestamp cost)))
-    ("groups" . ,(loop for group in 
-		       (get-groups (first (get-user-costs 1)))
+    ("groups" . ,(loop for group in (get-groups cost)
 		     collecting (cons group t)))
     ("groupslist" . ,(get-groups cost))))
 
@@ -67,10 +65,19 @@
 	      "AddRecieptCtrl" 
 	      (array "$scope"
 		     (lambda ($scope)
+		       (setf (chain $scope date) (new (|Date|)))
 		       (setf (chain $scope groups)
 			     (lisp (append `(return-lisp-list)
-					   (remove :NONE (get-all-groups userid)))))
-		       
+					   (reverse (remove :NONE (get-all-groups userid))))))
+		       (setf (chain $scope total)
+			     (lambda (costs)
+			       (setf total 0)
+			       (chain angular 
+				      (|forEach| costs
+					       (lambda (cost) 
+						 (incf total 
+						       (|parseFloat| (chain cost amount))))))
+			       total))
 		       (setf (chain $scope add-cost)
 			     (lambda() 
 			       (defvar groups
