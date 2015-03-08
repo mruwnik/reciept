@@ -14,7 +14,11 @@
 		       "^/data/(.*?)\.json$" 'json-data-handler))))
 
 (defun timestamp-to-json-timestamp(timestamp)
-  (* (simple-date:timestamp-to-universal-time timestamp) 1000))
+  ; simple-date counts time from 1900, not 1970, so all timestamps
+  ; will be 25567 days older than they should be, while angular has
+  ; milisecond timestamps - hence the magic numbers
+  (* (- (simple-date:timestamp-to-universal-time timestamp)
+	(* 25567 24 60 60)) 1000))
 (defgeneric to-json (object)
   (:documentation "returns the given object in a json representation"))
 (defmethod to-json ((cost cost))
@@ -26,9 +30,6 @@
     ("groups" . ,(loop for group in (get-groups cost)
 		     collecting (cons group t)))
     ("groupslist" . ,(get-groups cost))))
-
-
-
 (defmethod to-json ((reciept reciept))
   `(("id" . ,(id reciept))
     ("description" . ,(description reciept))
@@ -40,13 +41,6 @@
     ("amount" . ,(reduce '+ (mapcar 'amount (costs reciept))))
     ("currency" . ,(when (costs reciept) 
 			 (get-currency (first (costs reciept)))))))
-
-
-
-
-
-
-
 
 
 (hunchentoot:define-easy-handler (reciepts-controller

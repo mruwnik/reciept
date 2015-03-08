@@ -13,12 +13,11 @@
 	    "http://code.highcharts.com/modules/exporting.js"
 	    "/js/stats.js")
 	(:div :class "graphs" 
-	      (cl-who:fmt (get-graphs))))))
+	      (cl-who:fmt (get-graphs id))))))
 
 (hunchentoot:define-easy-handler (get-graphs-handler 
 				  :uri (get-page-address :graphData))
-    ((user :parameter-type 'integer)
-     (timestep :parameter-type 'integer :init-form 1)
+    ((timestep :parameter-type 'integer :init-form 1)
      (timeunit :parameter-type 'string :init-form "day")
      (from :parameter-type 'parse-date 
 	   :init-form (create-date-timestamp :months -1))
@@ -46,12 +45,14 @@
       (get-graph-settings 
        (do* ((current (+ (get-uni-timestamp (first rows)) timestep)
 		      (incf current timestep))
-	     (last (+ (get-uni-timestamp (first (last rows))) timestep))
+	     (last (+ (get-uni-timestamp (first (last rows)))
+		      (* 2 timestep)))
 	     (result NIL))
 	    ((> current last) result)
 	 (setf result (append result 
 			      `(,(with-date (:date current :day date :month month)
 					    (format NIL "~2,'0d.~2,'0d" date month))))))
+
        (let* ((json-data NIL)
 	    (data (get-costs-over-time-by-group rows timestep groups)))
 	 (dolist (group groups json-data)
@@ -75,14 +76,14 @@
 	))
      stream)))
 
-(defun get-graphs (&key (timestep 1) (timeunit "day")
+(defun get-graphs (userid &key (timestep 1) (timeunit "day")
 		     (start (create-date-timestamp :months -1))
 		     (end (create-date-timestamp :months 1)))
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
     (:div :id "container" :style "min-width: 310px; height: 400px; margin: 0 auto")
     (:div :class "graph-scale"
 	  (:label "timestep")
-	  (:input :type "text" :id "timestep" :value "1")
+	  (:input :type "text" :id "timestep" :value userid)
 	  (:select :name "timestep-unit"
 		   (dolist (unit '("hour" "day" "week" "month" "year"))
 		      (if (equalp unit timeunit)

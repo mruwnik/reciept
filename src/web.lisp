@@ -92,45 +92,6 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	   (get-page-address page) 
 	   params (hunchentoot:query-string hunchentoot:*request*))))
 
-(defun make-html-table (columns data &key (sort-link "?") (sort-by NIL) (sort-dir "desc") (default-dir "desc") (row-id NIL))
-  "converts the given data into a sortable html table. 
- - 'columns' should be a list of columns to be displayed - each column descriptor should be a tuple of (column-name column-function). coulmn-name is the columns title, which when clicked on sorts the table by that column, while column-function is a 1 argument function to be called on every row for the columns value. 
- - 'sort-link' is the link to be called when a column title is clicked on. it needs the '?' to be already inserted. 
- - 'sort-by' defines what column the data has been sorted by.
- - 'sort-dir' says what direction it was sorted in.
- -  'default-dir' declares what direction a column should be sorted by (when clicked) if it isn't the active one. 
- - 'row-id' should be a function that recieves a row and returns an appropriate id for that row. if it returns NIL than no id is given"
-  (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
-    (:table :style "width: 100%"
-     (:tr
-      (do* ((columns columns (rest columns))
-	    (column (first columns) (first columns))
-	    (name (first column) (first column))
-	    (function (second column) (second column))
-	    (sort-name (if (third column) (third column) name)
-		       (if (third column) (third column) name)))
-	   ((not columns))
-	(cl-who:htm 
-	 (:th :class (format NIL "~a~:[~; active-column~]" 
-			     name (equal sort-by sort-name))
-	      (when name 
-		(cl-who:fmt 
-		 (make-link 
-		  (format NIL "~asort-by=~a&sort-dir=~:[~*~a~;~a~]" 
-			     sort-link sort-name 
-			     (equal sort-by sort-name)
-			     sort-dir default-dir)
-		 name)))))))
-     (dolist (row data)
-       (cl-who:htm
-	(:tr :id (when row-id (funcall row-id row))
-	(dolist (column columns)
-	  (cl-who:htm
-	   (:td :class (format NIL "~a~:[~; active-column~]"
-			       (first column) 
-			       (equal sort-by (first column)))
-		(when (second column)
-		  (cl-who:fmt (funcall (second column) row))))))))))))
 
 (defun make-tabs(tabs)
   "makes a html tabs thingy. the tabs should be of the format:
@@ -230,11 +191,11 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	   (:html :xmlns "http://www.w3.org/1999/xhtml"
 		  :xml\:lang "en" 
 		  :lang "en"
+		  :ng-app "recieptApp"
 		  (:head 
 		   (:meta :http-equiv "Content-Type" 
 			  :content    "text/html;charset=utf-8")
-		   (:title (get-page-title ,
-page))
+		   (:title (get-page-title ,page))
 		   (dolist (,script-name ,css)
 		     (cl-who:htm
 		      (:link :type "text/css" 
@@ -392,38 +353,27 @@ page))
      stream)))
 
 
-
 (hunchentoot:define-easy-handler (start-page-handler 
 				  :uri (get-page-address :start-page))
     ((view :init-form :show-reciepts :parameter-type 'keyword))
   (with-auth (username userid)
-    (cl-who:with-html-output-to-string (*standard-output* nil :prologue t :indent t)  
-      (:html 
-       :ng-app "recieptApp"
-       (:head
-	(:meta :charset "utf-8")
-	(:title (get-page-title :start-page))
-	(:link :rel "stylesheet" :href "/css/reciept.css")
-	(:script 
-	 :src "https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.1/angular.js")
-	(:script 
-	 :src "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js")
-	(:script 
-	 :src "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js")
-	(:script 
-	 :src (get-page-address :reciepts-controller)))
-       (:body
-	(cl-who:fmt (get-header userid))
-	(cl-who:fmt (get-add-reciept-form))
-	:br :br
-	(cl-who:fmt
-	 (make-link (get-page-address :undo) 
-		    (get-page-link-name :undo)
-		    (unless (> (avaiable-undos userid) 0) "hidden")
-		    "undo-link"))
-	(cl-who:fmt
-	 (make-tabs `(("reciepts" ,(equal :show-reciepts view)
-				  ,(get-reciepts :type :angular))
-		      ("costs" ,(equal :show-costs view)
-			       ,(get-costs :type :angular))))))))))
+    (standard-page view 
+	'("/css/reciept.css")
+	`("https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.1/angular.js"
+	  "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
+	  "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"
+	  ,(get-page-address :reciepts-controller))
+      (cl-who:fmt (get-header userid))
+      (cl-who:fmt (get-add-reciept-form))
+      :br :br
+      (cl-who:fmt
+       (make-link (get-page-address :undo) 
+		  (get-page-link-name :undo)
+		  (unless (> (avaiable-undos userid) 0) "hidden")
+		  "undo-link"))
+      (cl-who:fmt
+       (make-tabs `(("reciepts" ,(equal :show-reciepts view)
+				,(get-reciepts :type :angular))
+		    ("costs" ,(equal :show-costs view)
+			     ,(get-costs :type :angular))))))))
 

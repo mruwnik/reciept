@@ -19,8 +19,7 @@ $(function () {
 
 var updateGraph = function(){
     $.getJSON( "/get-graph-data", 
-	       {user: 1,
-		timestep: $(".graph-scale #timestep").val().trim(),
+	       {timestep: $(".graph-scale #timestep").val().trim(),
 		timeunit: $('.graph-scale select[name="timestep-unit"]')
 		                 .find(":selected").text().trim(),
 		from: $(".graph-limits #graph-start-date").val()

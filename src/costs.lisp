@@ -265,7 +265,7 @@
 	     (:span :class "amount" 
 		    "{{reciept.amount}}{{reciept.currency}}")
 	     (:span :class "description" "{{reciept.description}}")
-	     (:span :class "shop" "{{reciept.description.shop}}")
+	     (:span :class "shop" "{{reciept.shop}}")
 	     (:span :class "printed"
 		    "{{reciept.printed | date:\"dd/MM/yyyy hh:mm\"}}") 
 	     (cl-who:fmt 
