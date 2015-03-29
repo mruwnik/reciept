@@ -23,43 +23,42 @@
 	   :init-form (create-date-timestamp :months -1))
      (to :parameter-type 'parse-date 
 	 :init-form (create-date-timestamp :months 1)))
-  (unless user
-    (setf user (hunchentoot:session-value :userId)))
-  (let* ((timestep (* timestep
-		      (cond
-			((equalp "hour" timeunit) (* 60 60))
-			((equalp "day" timeunit) (* 60 60 24))
-			((equalp "week" timeunit) (* 60 60 24 7))
-			((equalp "month" timeunit) (* 60 60 24 31))
-			((equalp "year" timeunit) (* 60 60 24 365 ))
-			(t (* 60 60 24)))))
-	 (rows 
-	  (get-user-costs
-	   user :where (:and (:> 'timestamp  
-				 (simple-date:universal-time-to-timestamp from))
-			     (:< 'timestamp  
-				 (simple-date:universal-time-to-timestamp to)))
-			       :order-by 'timestamp :order-dir :asc))
-	 (groups (get-all-groups user rows)))
-    (when rows
-      (get-graph-settings 
-       (do* ((current (+ (get-uni-timestamp (first rows)) timestep)
-		      (incf current timestep))
-	     (last (+ (get-uni-timestamp (first (last rows)))
-		      (* 2 timestep)))
-	     (result NIL))
-	    ((> current last) result)
-	 (setf result (append result 
-			      `(,(with-date (:date current :day date :month month)
-					    (format NIL "~2,'0d.~2,'0d" date month))))))
-
-       (let* ((json-data NIL)
-	    (data (get-costs-over-time-by-group rows timestep groups)))
-	 (dolist (group groups json-data)
-	   (setf json-data (append json-data
-				   `(((:name . ,group)
-				      (:data . ,(getf data group))))))))
-       "costs over time" "column" "cost"))))
+  (with-auth (user userid)
+    (let* ((timestep (* timestep
+			(cond
+			  ((equalp "hour" timeunit) (* 60 60))
+			  ((equalp "day" timeunit) (* 60 60 24))
+			  ((equalp "week" timeunit) (* 60 60 24 7))
+			  ((equalp "month" timeunit) (* 60 60 24 31))
+			  ((equalp "year" timeunit) (* 60 60 24 365 ))
+			  (t (* 60 60 24)))))
+	   (rows 
+	    (get-user-costs
+	     userid :where (:and (:> 'timestamp  
+				   (simple-date:universal-time-to-timestamp from))
+			       (:< 'timestamp  
+				   (simple-date:universal-time-to-timestamp to)))
+	     :order-by 'timestamp :order-dir :asc))
+	   (groups (get-all-groups userid rows)))
+      (when rows
+	(get-graph-settings 
+	 (do* ((current (+ (get-uni-timestamp (first rows)) timestep)
+			(incf current timestep))
+	       (last (+ (get-uni-timestamp (first (last rows)))
+			(* 2 timestep)))
+	       (result NIL))
+	      ((> current last) result)
+	   (setf result (append result 
+				`(,(with-date (:date current :day date :month month)
+					      (format NIL "~2,'0d.~2,'0d" date month))))))
+	 
+	 (let* ((json-data NIL)
+		(data (get-costs-over-time-by-group rows timestep groups)))
+	   (dolist (group groups json-data)
+	     (setf json-data (append json-data
+				     `(((:name . ,group)
+					(:data . ,(getf data group))))))))
+	 "costs over time" "column" "cost")))))
 
 (defun get-graph-settings (categories data 
 			   graph-title graph-type yaxis-text)

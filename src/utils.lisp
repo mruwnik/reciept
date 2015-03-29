@@ -74,7 +74,6 @@ function prev (getf current field), where prev is the value calculated for the p
     ((or (= month 4) (= month 6) (= month 9) (= month 11)) 30)
     (T 31)))
 
-
 (defun get-spending-statistics(user &optional 
 				      (currency 
 				       (get-user-default-currency user)))
@@ -85,19 +84,23 @@ function prev (getf current field), where prev is the value calculated for the p
 					 currency))
 		   (get-this-months-costs user)))
 	   (total (cost-reduce user :raw-costs costs))
-	   (rent (cost-reduce user :groups '(:RENT :INVESTMENTS) :raw-costs costs))
-	   (ola (cost-reduce user :groups '(:OLA) 
-				   :raw-costs costs))
-	   (food (cost-reduce user :groups '(:JEDZENIE) :raw-costs costs))
-	   (school (cost-reduce user :groups '(:SZKOŁA) :raw-costs costs))
+	   (rent (cost-reduce user :groups '(:RENT :INVESTMENTS :PODATKI) :raw-costs costs))
+	   (get-stat (lambda (groups) 
+		       (print-money currency 
+				    (cost-reduce user :groups groups 
+						 :raw-costs costs))))
 	   (without-rent (- total rent))
 	   (avg-cost (/ without-rent date)))
       `(("suma wydatkow" . ,(print-money currency total))
 	("wydatki nie stale" . ,(print-money currency without-rent))
-	("sredni wydatek" . ,(print-money currency avg-cost))
-	("Ola" . ,(print-money currency ola))
-	("szkola" . ,(print-money currency school))
-	("jedzenie" . ,(print-money currency food))
+	("sredni dzienny wydatek" . ,(print-money currency avg-cost))
+	("Ola" . ,(funcall get-stat '(:OLA)))
+	("inwestycje" . ,(funcall get-stat '(:INVESTMENTS)))
+	("podroz" . ,(funcall get-stat '(:PODRÓŹ)))
+	("szkola" . ,(funcall get-stat '(:SZKOŁA)))
+	("jedzenie" . ,(funcall get-stat '(:JEDZENIE)))
+	("slodycze" . ,(funcall get-stat '(:SŁODYCZE)))
+	("ubrania" . ,(funcall get-stat '(:UBRANIA)))
 	("szacowany koszt" . 
 		  ,(format NIL "~a (~a)" (print-money currency (+ rent (* avg-cost (get-days-in-month month))))
 			   (print-money currency (* avg-cost (get-days-in-month month))))
