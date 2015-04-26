@@ -147,3 +147,34 @@
   "returns the given costs timestamp as a simple-date:timestamp"
   (simple-date:timestamp-to-universal-time (timestamp cost)))
 
+(defclass compilation()
+  ((id
+    :initarg :id
+    :reader id
+    :col-type serial
+    :documentation "the id of this compilation")
+   (userId
+    :initarg :userId
+    :accessor userId
+    :col-type integer
+    :documentation "the id of the user to whom this belongs")
+   (name
+    :initarg :name
+    :accessor name
+    :col-type varchar
+    :documentation "the name of this compilation")
+   (expression
+    :initarg :expression
+    :accessor expression
+    :col-type varchar
+    :documentation "the expression used to generate this compilation")
+   (orderNum
+    :initarg :orderNum
+    :initform 0
+    :accessor orderNum
+    :col-type integer
+    :documentation "defines where to display this compilation - the lower the number, the sooner it will appear in a list of compilations"))
+  (:documentation "Dao class for a compliation record.")
+  (:metaclass postmodern:dao-class)
+  (:table-name compilations)(:keys id))
+

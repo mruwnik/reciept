@@ -2,26 +2,25 @@
 
 (defun get-this-months-costs (user)
   (with-date (:month month :year year)
-    (if (use-real-database)
-	(postmodern:with-connection (db-params)
-	  (postmodern:select-dao 
-	   'cost
-	   (:and 
-	    (:= 'userId user)
-	    (:< 'amount 0)
-	    (:> 'timestamp  
-		(simple-date:universal-time-to-timestamp
-		 (encode-universal-time 0 0 0 1 month year)))
-	    (:< 'timestamp 
-		(simple-date:universal-time-to-timestamp
-		 (encode-universal-time 0 0 0 1 
-					(if (< month 12)
-					    (1+ month)
-					    1)
-					      (if (< month 12)
-						  year
-						  (1+ year))))))
-	   (:desc 'timestamp))))))
+    (postmodern:with-connection (db-params)
+      (postmodern:select-dao 
+       'cost
+       (:and 
+	(:= 'userId user)
+	(:< 'amount 0)
+	(:> 'timestamp  
+	    (simple-date:universal-time-to-timestamp
+	     (encode-universal-time 0 0 0 1 month year)))
+	(:< 'timestamp 
+	    (simple-date:universal-time-to-timestamp
+	     (encode-universal-time 0 0 0 1 
+				    (if (< month 12)
+					(1+ month)
+					1)
+				    (if (< month 12)
+					year
+					(1+ year))))))
+       (:desc 'timestamp)))))
 
 (defun get-group-costs(group costs &key (function 'remove-if-not))
   "returns the sum of all costs belonging to the given group"
@@ -91,19 +90,15 @@ function prev (getf current field), where prev is the value calculated for the p
 						 :raw-costs costs))))
 	   (without-rent (- total rent))
 	   (avg-cost (/ without-rent date)))
-      `(("suma wydatkow" . ,(print-money currency total))
-	("wydatki nie stale" . ,(print-money currency without-rent))
-	("sredni dzienny wydatek" . ,(print-money currency avg-cost))
-	("Ola" . ,(funcall get-stat '(:OLA)))
-	("inwestycje" . ,(funcall get-stat '(:INVESTMENTS)))
-	("podroz" . ,(funcall get-stat '(:PODRÓŹ)))
-	("szkola" . ,(funcall get-stat '(:SZKOŁA)))
-	("jedzenie" . ,(funcall get-stat '(:JEDZENIE)))
-	("slodycze" . ,(funcall get-stat '(:SŁODYCZE)))
-	("ubrania" . ,(funcall get-stat '(:UBRANIA)))
-	("szacowany koszt" . 
+      (append
+       `(("suma wydatkow" . ,(print-money currency total))
+	 ("wydatki nie stale" . ,(print-money currency without-rent))
+	 ("sredni dzienny wydatek" . ,(print-money currency avg-cost)))
+       (loop for comp in (get-compilations user) collecting
+	    (cons (name comp) (funcall get-stat (read-from-string (expression comp)))))
+       `(("szacowany koszt" . 
 		  ,(format NIL "~a (~a)" (print-money currency (+ rent (* avg-cost (get-days-in-month month))))
-			   (print-money currency (* avg-cost (get-days-in-month month))))
+			   (print-money currency (* avg-cost (get-days-in-month month)))))
 	 )))))
 
 ;; ###### helper functions

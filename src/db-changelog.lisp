@@ -83,15 +83,6 @@
 ;;     "<id>"
 ;;     (opertation))
 
-; hash all passwords - (hash salt password)
-;  (modify-db
-;   "1507-20140308"
-;   (dolist (user (postmodern:select-dao 'user))
-;     (setf (salt user) (random-password 15))
-;     (setf (password user) (get-password-hash user (password user)))
-;     (postmodern:update-dao user)))
-
-
   (modify-db
    "1307-20140310"
    (progn
@@ -102,6 +93,12 @@
       (:create-index 'costsUserIdx
 			    :on costs :fields userid reciept))
      ))
+  
+  ; add a compilation table to hold user defined compilations 
+  (modify-db
+   "1151-20150423"
+   (unless (postmodern:table-exists-p "compilations")
+     (postmodern:execute (postmodern:dao-table-definition 'compilation))))
 )
 
 

@@ -302,3 +302,38 @@
 
 (defun avaiable-undos(userid)
   (length (gethash userid *user-map*)))
+
+
+;; compilations functions
+(defgeneric add-compilation (user name expression &key order)
+  (:documentation "add a new compilation with the given values. If order is not specified, it will be set to 1 + the highest current order value for the given user."))
+(defmethod add-compilation ((user user) name expression &key order)
+  (add-compilation (id user) name expression :order order))
+(defmethod add-compilation ((user integer) name expression &key order)
+  (postmodern:with-connection (db-params)
+    (postmodern:make-dao 
+     'compilation :userId user :name name 
+     :expression expression
+     :orderNum (if order
+		order
+		(1+ (postmodern:coalesce
+		     (postmodern:query 
+		      (:select (:max 'orderNum)
+			       :from 'compilations
+			       :where (:= 'userId user))
+		      :single)
+		     0))))))
+
+(defgeneric get-compilations (user)
+  (:documentation "Get all compilations for the given user"))
+(defmethod get-compilations ((user user))
+  (get-compilations (id user)))
+(defmethod get-compilations ((user integer))
+  (postmodern:with-connection (db-params)
+    (postmodern:query 
+     (:order-by
+      (:select 'id 'userId 'name 'expression 'orderNum
+	       :from 'compilations
+	       :where (:= 'userId user))
+      'orderNum)
+     (:dao compilation))))
