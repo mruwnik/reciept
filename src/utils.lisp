@@ -1,5 +1,7 @@
 (in-package #:reciept)
 
+(defparameter *timezone-offset* (* 1 3600))
+
 (defun get-this-months-costs (user)
   (with-date (:month month :year year)
     (postmodern:with-connection (db-params)
@@ -10,16 +12,18 @@
 	(:< 'amount 0)
 	(:> 'timestamp  
 	    (simple-date:universal-time-to-timestamp
-	     (encode-universal-time 0 0 0 1 month year)))
+	     (+ (encode-universal-time 0 0 0 1 month year)
+		*timezone-offset*)))
 	(:< 'timestamp 
 	    (simple-date:universal-time-to-timestamp
-	     (encode-universal-time 0 0 0 1 
+	     (+ (encode-universal-time 0 0 0 1 
 				    (if (< month 12)
 					(1+ month)
 					1)
 				    (if (< month 12)
 					year
-					(1+ year))))))
+					(1+ year)))
+		*timezone-offset*))))
        (:desc 'timestamp)))))
 
 (defun get-group-costs(group costs &key (function 'remove-if-not))
@@ -47,10 +51,7 @@
 				     'remove-if 
 				     'remove-if-not)
 				 #'(lambda (cost)
-				     (find group 
-					   (if (use-real-database)
-					       (get-groups cost)
-					       (getf cost :groups))))
+				     (find group (get-groups cost)))
 				 costs)))))
       costs))
 
@@ -61,10 +62,7 @@
   "reduces the given list of costs by calling 
 function prev (getf current field), where prev is the value calculated for the previous cost"
   (reduce #'(lambda (a b) 
-	      (funcall function a 
-		       (if (use-real-database)
-			   (funcall field b)
-			   (getf b field))))
+	      (funcall function a (funcall field b)))
 	  costs :initial-value initial-value))
 
 (defun get-days-in-month (month)

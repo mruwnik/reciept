@@ -86,31 +86,48 @@
 
 (defmacro get-user-costs (userId &key (where NIL) 
 				   (order-by :timestamp) 
-				   (order-dir :desc))
+				   (order-dir :desc)
+				   (limit 100)
+				   (offset 0))
   "returns all costs that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
   `(postmodern:with-connection (db-params)
-     (postmodern:select-dao 'cost 
-			    ,(if where
-				 `(:and (:= 'userId ,userId)
-					,where)
-				 `(:= 'userId ,userId))
-			    ,(if (eq :desc order-dir)
-				 `(:desc ,order-by)
-				 order-by))))
+     (postmodern:query-dao 
+      'cost
+      (:limit
+       (:order-by
+	(:select '* :from 'costs
+		 :where
+		 ,(if where
+		      `(:and (:= 'userId ,userId)
+			     ,where)
+		      `(:= 'userId ,userId)))
+	  ,(if (eq :desc order-dir)
+	       `(:desc ,order-by)
+	       order-by))
+       ,limit ,offset))))
 
 (defmacro get-user-reciepts (userId &key (where NIL)
 				      (order-by :printed) 
-				      (order-dir :desc))
+				      (order-dir :desc)
+				      (limit NIL)
+				      (offset 0))
   "returns all reciepts that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
   `(postmodern:with-connection (db-params)
-     (postmodern:select-dao 'reciept
-			    ,(if where
-				 `(:and (:= 'userId ,userId)
-					,where)
-				 `(:= 'userId ,userId))
-			    ,(if (eq :desc order-dir)
-				 `(:desc ,order-by)
-				 order-by))))
+     (postmodern:query-dao 
+      'reciept
+      (:limit
+       (:order-by
+	(:select '* :from 'reciepts
+		 :where
+		 ,(if where
+		      `(:and (:= 'userId ,userId)
+			     ,where)
+		      `(:= 'userId ,userId)))
+	  ,(if (eq :desc order-dir)
+	       `(:desc ,order-by)
+	       order-by))
+       ,limit ,offset))))
+
 
 (defun fill-reciepts(userid reciepts &key (order-costs :description)
 				       (order-costs-dir :desc))

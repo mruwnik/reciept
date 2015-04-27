@@ -336,7 +336,7 @@
 	      (cl-who:fmt 
 	       (get-page-link :delete-cost `("id" "{{cost.id}}")))))))))
 
-(defun get-reciepts(&key (userid 0) (sort-by NIL) (sort-dir NIL) (type :json))
+(defun get-reciepts(&key (userid 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))
   (cond
     ((equal type :html) 
      (get-html-reciepts userid :sort-by sort-by :sort-dir sort-dir))
@@ -345,11 +345,14 @@
      (with-output-to-string (stream)
        (cl-json:encode-json
 	`#( ,@(loop for reciept in
-		   (fill-reciepts userid (get-user-reciepts userid))
+		   (fill-reciepts userid 
+				  (get-user-reciepts userid 
+						     :limit limit
+						     :offset offset))
 		 collecting (to-json reciept)))
 	stream)))))
 
-(defun get-costs (&key (userId 0) (sort-by NIL) (sort-dir NIL) (type :json))
+(defun get-costs (&key (userId 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))
   (cond
     ((equal type :html) (get-html-costs userid 
 					:sort-by sort-by 
@@ -362,10 +365,14 @@
 	    (if (eq :desc (make-keyword sort-dir))
 		(get-user-costs userId
 				:order-by (make-keyword sort-by) 
-				:order-dir :desc)	
+				:order-dir :desc
+				:limit limit
+				:offset offset)	
 		(get-user-costs userId
 				:order-by (make-keyword sort-by)
-				:order-dir :asc))
+				:order-dir :asc
+				:limit limit
+				:offset offset))
 	    (get-user-costs userId))
 		 collecting (to-json cost)))
 	stream)))))
