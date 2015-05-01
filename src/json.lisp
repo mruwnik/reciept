@@ -4,10 +4,12 @@
   (with-auth (username userid)
     (setf (hunchentoot:content-type*) "text/javascript")
     (cond
-      ((equal id "costs") (get-costs :userid userid :limit 20))
-      ((equal id "reciepts") (get-reciepts :userid userid :limit 30))
+      ((equal id "costs") (get-costs :userid userid :limit 2))
+      ((equal id "reciepts") 
+       (get-reciepts :userid userid 
+		     :limit (or (hunchentoot:get-parameter "limit") 15)
+		     :offset (or (hunchentoot:get-parameter "offset") 0)))
       (t ""))))
-
 
 (setf hunchentoot:*dispatch-table*
 	(append hunchentoot:*dispatch-table* 
@@ -52,16 +54,119 @@
     (concatenate 'string
       (ps
 	(defvar reciept-App (chain angular (module "recieptApp" 
-						   (array "recieptControllers"))))
+						   (array "recieptControllers" "infinite-scroll"))))
 	
 	(defvar reciept-controllers 
 	  (chain angular (module "recieptControllers" (array)))))
       (format NIL "~%~{~a~%~}" 
 	      (loop for func in 
-		   '(add-reciept-ctrl tabs-ctrl reciepts-list-ctrl
-		     costs-list-ctrl lisp-functions) collecting 
+		   '(add-reciept-ctrl tabs-ctrl
+		     costs-list-ctrl infinite-reciepts-ctrl
+		     handle-reciepts save-cost-json
+		     lisp-functions) collecting 
 		   (funcall func username userid)))
 	)))
+
+(defun infinite-reciepts-ctrl (username userid)
+  (ps
+    (chain reciept-controllers
+	   (controller
+	    "RecieptsListCtrl"
+	    (lambda ($scope |Reciepts|)
+	      (setf (chain $scope reciepts) (new (|Reciepts|)))
+	      (setf (chain this groups)
+		    (lisp (append `(return-lisp-list)
+				  (remove :NONE 
+					  (get-all-groups userid)))))
+	      (setf (chain $scope save-cost)
+		    (lambda (id)
+		      (setf selected (chain $scope reciepts selected))
+		      (setf cost
+			    (getprop (chain selected costs) id))
+		      (chain 
+		       (save-cost cost (getprop (chain selected) id))
+		       (success
+			(lambda(data)
+			  (chain 
+			   $scope 
+			   ($apply
+			    (lambda ()
+			      (setf (chain cost amount)
+				    (chain data 0 costs 0 amount))
+			      (setf (chain selected amount) 0)
+			      (dolist (c (chain selected costs))
+				(incf (chain selected amount)
+				      (chain c amount)))
+			      (if (getprop cost "edit")
+				  (setf (getprop cost "edit") NIL)
+				  (setf (getprop cost "edit") t)))))))))))))))
+
+(defun handle-reciepts (username userid)
+  (ps
+    (chain reciept-Controllers
+	   (factory "Reciepts" 
+		    (lambda($http)
+		      (setf |Reciepts| 
+			    (lambda ()
+			      (setf (chain this items) '())
+			      (setf (chain this selected) NIL)
+			      (setf (chain this busy) false)
+			      (setf (chain this after) "")))
+		      (setf (chain |Reciepts| prototype |nextPage|)
+			    (lambda ()
+			      (when (chain this busy) return)
+			      (setf (chain this busy) true)
+			      (setf url (lisp (get-page-address :reciepts-json)))
+			      (setf offset (if (chain this items)
+					       (chain this items length)
+					       0))
+			      (chain $http 
+				     (get url 
+					  (create :params 
+						  (create  :offset offset)))
+				     (success 
+				      (chain 
+				       (lambda (data)
+					 (setf (chain this items)
+					       (append (chain this items) data))
+					 (setf 
+					  (chain this after)
+					  (+ "t3_" 
+					     (chain
+					      (getprop
+					       (chain this items)
+					       (1- (chain this items length)))
+					      id)))
+					 (setf (chain this busy) false))
+				       (bind this)))
+				     (error (lambda (data) 
+					      (chain console (log data)))))))
+		      (setf (chain |Reciepts| prototype toggle)
+			    (lambda(id)
+			      (setf (chain this selected)
+				    (getprop (chain this items) id))
+			      (if (getprop 
+				   (getprop (chain this items) id)
+				   "selected")
+				  (setf (getprop 
+					 (getprop (chain this items) id)
+					 "selected") NIL)
+				  (setf (getprop 
+					 (getprop (chain this items) id) "selected") t))))
+		      (setf (chain |Reciepts| prototype toggle-edit-cost)
+			    (lambda(id)
+			      (if (getprop 
+				   (getprop 
+				    (chain this selected costs) 
+				    id)
+				   "edit")
+				  (setf (getprop 
+					 (getprop 
+					  (chain this selected costs) id)
+					 "edit") NIL)
+				  (setf (getprop 
+					 (getprop (chain this selected costs) id) "edit") t))))
+		      |Reciepts|)))))
 
 (defun add-reciept-ctrl (username userid)
     (ps
@@ -146,85 +251,25 @@
 				       (setf (chain $scope costs)
 					     data))))))))))
 
-(defun reciepts-list-ctrl (username userid)
+(defun save-cost-json (username userid)
   (ps
-    (chain reciept-controllers 
-	   (controller 
-	    "RecieptsListCtrl" 
-	    (array "$scope" "$http"
-		   (lambda ($scope $http)
-		     (chain $http  
-			    (get (lisp (get-page-address :reciepts-json)))
-			    (success (lambda(data)
-				       (setf (chain $scope reciepts)
-					     data))))
-		     (defvar selected null)
-		     (setf (chain $scope toggle-reciept)
-			   (lambda(id)
-			     (setf selected
-				   (getprop (chain $scope reciepts) id))
-			     (if (getprop 
-				  (getprop (chain $scope reciepts) id)
-				  "selected")
-				 (setf (getprop 
-					(getprop (chain $scope reciepts) id)
-					"selected") NIL)
-				 (setf (getprop 
-					(getprop (chain $scope reciepts) id) "selected") t))))
-		     (setf (chain $scope groups)
-			   (lisp (append `(return-lisp-list)
-					 (remove :NONE (get-all-groups userid)))))
-		     (setf (chain $scope toggle-edit-cost)
-			   (lambda(id)
-			     (if (getprop 
-				  (getprop (chain selected costs) id)
-				  "edit")
-				 (setf (getprop 
-					(getprop (chain selected costs) id)
-					"edit") NIL)
-				 (setf (getprop 
-					(getprop (chain selected costs) id) "edit") t))))
-		       (setf (chain $scope save-cost)
-			     (lambda(id)
-			       (setf cost (getprop (chain selected costs) id))
-			       (setf groups '())
-			       (for-in (k (@ cost groups))
-				       (when (getprop (chain cost groups) k)
-					 (chain groups (push k))))
-			       (chain $ 
-				      (post
-				       (lisp (get-page-address :add-cost))
-				       (create
-					 :ajax T
-					 :id (chain cost id)
-					 :reciept-id (chain selected id)
-					 :amount (chain cost amount)
-					 :description (@ cost description)
-					 :groups groups
-					 :new-groups (@ cost newGroups))
-				       (lambda(data)
-					 (chain $scope ($apply
-							(lambda()
-							(setf 
-							 (chain selected amount)
-							 (+ 
-							  (chain selected amount)
-							  (chain data 0 costs 0 amount)))
-							(setf 
-							 (chain cost amount)
-							 (chain data 0 costs 0 amount))
-							(setf
-							 (@ cost groupslist)
-							 groups)
-						(if (getprop 
-						     (getprop (chain selected costs) id)
-						     "edit")
-						    (setf (getprop 
-							   (getprop (chain selected costs) id)
-							   "edit") NIL)
-						    (setf (getprop 
-							   (getprop (chain selected costs) id) "edit") t))))))))))
-				       ))))))
+    (defun save-cost (cost reciept-id)
+      (setf groups '())
+      (for-in (k (@ cost groups))
+	      (when (getprop (chain cost groups) k)
+		(chain groups (push k))))
+      (chain $ 
+	     (post
+	      (lisp (get-page-address :add-cost))
+	      (create
+	       :ajax T
+	       :id (chain cost id)
+	       :reciept-id reciept-id
+	       :amount (chain cost amount)
+	       :description (@ cost description)
+	       :groups groups
+	       :new-groups (@ cost newGroups)))
+	      ))))
 
 (defun lisp-functions (username userid)
   (ps

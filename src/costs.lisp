@@ -26,7 +26,7 @@
      (description :request-type :post :parameter-type 'string)
      (amount :request-type :post :parameter-type #'read-from-string)
      (currency :request-type :post 
-	       :init-form (get-currency (get-default-currency))
+	       :init-form NIL
 	       :parameter-type 'keyword)
      (new-groups :request-type :post :parameter-type
 		 #'(lambda (groups)
@@ -34,6 +34,7 @@
 		       (mapcar 'make-keyword (split-str groups ",")))))
      (ajax :request-type :post :parameter-type 'boolean))
   (with-auth (user userid)
+    (unless currency (setf currency (get-user-default-currency userid)))
     (let ((groups (append (get-url-groups "groups[]")
 			  new-groups)))
       (when (eq :POST (hunchentoot:request-method hunchentoot:*request*))
@@ -253,56 +254,66 @@
 
 (defun get-angular-reciepts(&key (sort-by NIL) (sort-dir NIL))
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
-    (:div 
-     :ng-controller "RecieptsListCtrl" :class "reciepts"
-      (:div 
-      :ng-repeat "reciept in reciepts | orderBy:recieptsOrder"
-      (:div 
-       :class "reciept" :id "{{reciept.id}}" 
-       :ng-class "{active: reciept.selected}"
-       (:div :class "reciept-data"
-	     :ng-click "toggleReciept($index)"
-	     (:span :class "amount" 
-		    "{{reciept.amount}}{{reciept.currency}}")
-	     (:span :class "description" "{{reciept.description}}")
-	     (:span :class "shop" "{{reciept.shop}}")
-	     (:span :class "printed"
-		    "{{reciept.printed | date:\"dd/MM/yyyy hh:mm\"}}") 
-	     (cl-who:fmt 
-	      (get-page-link :delete-reciept `("id" "{{reciept.id}}")
-			     "delete")))
-       (:div 
-	:class "costs"
-	(:div :ng-repeat "cost in reciept.costs | orderBy:costsOrder" 
-	      :id "cost{{cost.id}}" :class "cost"
-	      :ng-class "{edit: cost.edit}"
-	      (:div :class "cost-data"
-		    (:span :class "description" "{{cost.description}}")
-		    (:span :class "amount" "{{cost.amount}} {{cost.currency}}")
-		    (:span :class "groups" "{{cost.groupslist.join(', ')}}")
-		    (cl-who:fmt
-		     (get-page-link :delete-cost `("id" "{{cost.id}}") "delete"))
-		    (:button :id "edit-cost" 
-			     :ng-click "toggleEditCost($index)"
-			     :class "edit" "edit")) 
-	      (:div :class "edit-cost"
-		    (cl-who:fmt (get-add-cost-fields))
-		    (:input :type "hidden" :name "id" :value "{{cost.id}}")
-		    (:button :id "cancel" 
-			     :ng-click "toggleEditCost($index)"
-			     :class "cancel" "cancel")
-		    (:button :id "save-cost"
-			     :ng-click "saveCost($index)"
-			     :class "save" "save")))
-	(:div :class "cost"
-	      (:div :class "cost-data"
-		    (:button :id "edit-cost" :class "edit" "add cost"))
-	      (:div :class "edit-cost"
-		    (cl-who:fmt (get-add-cost-fields))
-		    (:input :type "hidden" :name "reciept-id"
-			    :value "{{reciept.id}}")
-		    (:button :id "cancel" :class "cancel" "cancel")
-		    (:button :id "save-cost" :class "save" "save")))))))))
+    (:div :ng-controller "RecieptsListCtrl" :class "reciepts"
+     (:div 
+      :infinite-scroll "reciepts.nextPage()" 
+      :infinite-scroll-disabled "reciepts.busy"
+      :infinite-scroll-distance "1"
+      (:div :ng-repeat "reciept in reciepts.items | orderBy:recieptsOrder"
+       (:div :class "reciept" :id "{{reciept.id}}" 
+	     :ng-class "{active: reciept.selected}"
+	(:div :class "reciept-data"
+	      :ng-click "reciepts.toggle($index)"
+	      (:span :class "amount" 
+		     "{{reciept.amount}}{{reciept.currency}}")
+	      (:span :class "description" "{{reciept.description}}")
+	      (:span :class "shop" "{{reciept.shop}}")
+	      (:span :class "printed"
+		     "{{reciept.printed | date:\"dd/MM/yyyy hh:mm\"}}") 
+	      (cl-who:fmt 
+	       (get-page-link :delete-reciept `("id" "{{reciept.id}}")
+			      "delete")))
+	(:div 
+	 :class "costs"
+	 (:div :ng-repeat "cost in reciept.costs | orderBy:costsOrder" 
+	       :id "cost{{cost.id}}" :class "cost"
+	       :ng-class "{edit: cost.edit}"
+	       (:div :class "cost-data"
+		     (:span :class "description" "{{cost.description}}")
+		     (:span :class "amount" "{{cost.amount}} {{cost.currency}}")
+		     (:span :class "groups" "{{cost.groupslist.join(', ')}}")
+		     (cl-who:fmt
+		      (get-page-link :delete-cost `("id" "{{cost.id}}") "delete"))
+		     (:button :id "edit-cost" 
+			      :ng-click "reciepts.toggleEditCost($index)"
+			      :class "edit" "edit")) 
+	       (:div :class "edit-cost"
+		     (cl-who:fmt (get-add-cost-fields))
+		     (:input :type "hidden" :name "id" :value "{{cost.id}}")
+		     (:button :id "cancel" 
+			      :ng-click "reciepts.toggleEditCost($index)"
+			      :class "cancel" "cancel")
+		     (:button :id "save-cost"
+			      :ng-click "saveCost($index)"
+			      :class "save" "save")))
+	 (:div :class "cost"
+	       (:div :class "cost-data"
+		     (:button :id "edit-cost"
+			      :ng-click "reciepts.toggleEditCost()"
+			      :class "edit" "add cost"))
+	       (:div :class "edit-cost"
+		     (cl-who:fmt (get-add-cost-fields))
+		     (:input :type "hidden" :name "reciept-id"
+			     :value "{{reciept.id}}")
+		     (:button :id "cancel" 
+			      :ng-click "reciepts.toggleEditCost()"
+			      :class "cancel" "cancel")
+		     (:button :id "save-cost"
+			      :ng-click "saveCost()"
+			      :class "save" "save"))))
+	
+	(:div :style "clear: both;")))
+     (:div :ng-show "reddit.busy" "Loading data...")))))
 
 (defun get-angular-costs()
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)

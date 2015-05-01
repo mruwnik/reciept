@@ -359,9 +359,10 @@ eg. (redirect \"home\" param1 bla param2 ble)"
   (with-auth (username userid)
     (standard-page view 
 	'("/css/reciept.css")
-	`("https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.1/angular.js"
-	  "http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
+	`("http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
 	  "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"
+	  "https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.1/angular.js"
+	  "/js/ng-infinite-scroll.js"
 	  ,(get-page-address :reciepts-controller))
       (cl-who:fmt (get-header userid))
       (cl-who:fmt (get-add-reciept-form))
