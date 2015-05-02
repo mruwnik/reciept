@@ -249,7 +249,7 @@
 		    (:input :type "hidden" :value "{{newCost.id}}"
 			    :name "cost-id")))
 	     (:div :class "cost"
-		 (cl-who:fmt (get-add-cost-fields "reciept.newCost")))
+		 (cl-who:fmt (get-add-cost-fields)))
 	     (:input :type "button" :id "add-cost" 
 		     :value "add cost" :ng-click "addCost()")
 	     (:input :type "submit" :value " submit")))))
