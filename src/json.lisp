@@ -216,8 +216,8 @@
 					:description (chain $scope cost description)
 					:groups groups
 					:groupsString (chain groups (join ", ")))))
-			       (setf (chain $scope cost amount) 0)
-			       (setf (chain $scope cost description) "")))
+			       (delete (chain $scope cost amount))
+			       (delete (chain $scope cost description))))
 		       
 		       (setf (chain $scope remove-new-cost)
 			     (lambda(id)

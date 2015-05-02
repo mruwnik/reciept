@@ -250,8 +250,9 @@
 			    :name "cost-id")))
 	     (:div :class "cost"
 		 (cl-who:fmt (get-add-cost-fields)))
-	     (:input :type "button" :id "add-cost" 
-		     :value "add cost" :ng-click "addCost()")
+	     (:input :type "button" :id "add-cost" :value "add cost"
+		     :ng-click "addCost()" :ng-model "button"
+		     :ng-disabled "!(cost.description && cost.amount)")
 	     (:input :type "submit" :value " submit")))))
 
 (defun get-angular-reciepts(&key (sort-by NIL) (sort-dir NIL))
@@ -297,7 +298,10 @@
 			      :class "cancel" "cancel")
 		     (:button :id "save-cost"
 			      :ng-click "saveCost($index)"
-			      :class "save" "save")))
+			      :class "save"
+			      :ng-model "button"
+			      :ng-disabled "!(cost.description && cost.amount)"
+			      "save")))
 	 (:div :class "cost" :ng-class "{edit: reciept.newCost.edit}"
 	       (:div :class "cost-data"
 		     (:button :id "edit-cost"
@@ -312,7 +316,10 @@
 			      :class "cancel" "cancel")
 		     (:button :id "save-cost"
 			      :ng-click "saveCost()"
-			      :class "save" "save"))))
+			      :class "save"
+			      :ng-model "button"
+			      :ng-disabled "!(reciept.newCost.description && reciept.newCost.amount)"
+			      "save"))))
 	(:div :style "clear: both;")))
      (:div :ng-show "reddit.busy" "Loading data...")))))
 
