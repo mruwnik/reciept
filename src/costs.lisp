@@ -174,22 +174,24 @@
 				     (get-user-default-currency userid)))
 	  (redirect :show-reciepts)))))
 
-(defun get-add-cost-fields(&optional desc (amount "0"))
+(defun get-add-cost-fields(&optional (model "cost") desc (amount "0"))
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
     (:label "description:")
     (:input :type "text" :name "description" :value desc 
-	    :ng-model "cost.description" ) 
+	    :ng-model (concatenate 'string model ".description" ))
     (:label "amount:")
     (:input :type "text" :name "amount" :value amount
-	    :ng-model "cost.amount") :br
+	    :ng-model (concatenate 'string model ".amount")) :br
     (:label "groups")
     (:div :class "group-checkboxes"
 	  (:span :ng-repeat "group in groups"
-		 (:input :type "checkbox" :ng-model "cost.groups[group]"
+		 (:input :type "checkbox" 
+			 :ng-model (concatenate 'string model ".groups[group]")
 			 :name "groups" :value "{{group}}") 
 		 "{{group}}"))
     (:label "new groups:")
-    (:input :type "text" :name "new-groups" :ng-model "cost.newGroups")))
+    (:input :type "text" :name "new-groups" 
+	    :ng-model (concatenate 'string model ".newGroups"))))
 
 (defun get-add-cost-form()
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
@@ -247,7 +249,7 @@
 		    (:input :type "hidden" :value "{{newCost.id}}"
 			    :name "cost-id")))
 	     (:div :class "cost"
-		 (cl-who:fmt (get-add-cost-fields)))
+		 (cl-who:fmt (get-add-cost-fields "reciept.newCost")))
 	     (:input :type "button" :id "add-cost" 
 		     :value "add cost" :ng-click "addCost()")
 	     (:input :type "submit" :value " submit")))))
@@ -296,13 +298,13 @@
 		     (:button :id "save-cost"
 			      :ng-click "saveCost($index)"
 			      :class "save" "save")))
-	 (:div :class "cost"
+	 (:div :class "cost" :ng-class "{edit: reciept.newCost.edit}"
 	       (:div :class "cost-data"
 		     (:button :id "edit-cost"
 			      :ng-click "reciepts.toggleEditCost()"
 			      :class "edit" "add cost"))
 	       (:div :class "edit-cost"
-		     (cl-who:fmt (get-add-cost-fields))
+		     (cl-who:fmt (get-add-cost-fields "reciept.newCost"))
 		     (:input :type "hidden" :name "reciept-id"
 			     :value "{{reciept.id}}")
 		     (:button :id "cancel" 
@@ -311,7 +313,6 @@
 		     (:button :id "save-cost"
 			      :ng-click "saveCost()"
 			      :class "save" "save"))))
-	
 	(:div :style "clear: both;")))
      (:div :ng-show "reddit.busy" "Loading data...")))))
 
@@ -349,8 +350,6 @@
 
 (defun get-reciepts(&key (userid 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))
   (cond
-    ((equal type :html) 
-     (get-html-reciepts userid :sort-by sort-by :sort-dir sort-dir))
     ((equal type :angular) (get-angular-reciepts))
     ((equal type :json)
      (with-output-to-string (stream)
@@ -365,9 +364,6 @@
 
 (defun get-costs (&key (userId 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))
   (cond
-    ((equal type :html) (get-html-costs userid 
-					:sort-by sort-by 
-					:sort-dir sort-dir))
     ((equal type :angular) (get-angular-costs))
     ((equal type :json)
      (with-output-to-string (stream)

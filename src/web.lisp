@@ -341,7 +341,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
   (with-output-to-string (stream)
     (cl-json:encode-json
      `#( (("userid" . ,userid)
-	  ("costs" .  ,costs)
+	  ("costs" .  ,(to-json costs))
 	  ("reciepts" . ,reciept-ids)
 	  ("amount" . ,(when costs
 	     `(("total-amount" . ,(getf

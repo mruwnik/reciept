@@ -24,6 +24,8 @@
 	(* 25567 24 60 60)) 1000))
 (defgeneric to-json (object)
   (:documentation "returns the given object in a json representation"))
+(defmethod to-json ((objs list))
+  (mapcar #'to-json objs))
 (defmethod to-json ((cost cost))
   `(("id" . ,(id cost))
     ("description" . ,(description cost))
@@ -44,7 +46,6 @@
     ("amount" . ,(reduce '+ (mapcar 'amount (costs reciept))))
     ("currency" . ,(when (costs reciept) 
 			 (get-currency (first (costs reciept)))))))
-
 
 (hunchentoot:define-easy-handler (reciepts-controller
 				  :uri (get-page-address :reciepts-controller))
@@ -74,7 +75,7 @@
 	    "RecieptsListCtrl"
 	    (lambda ($scope |Reciepts|)
 	      (setf (chain $scope reciepts) (new (|Reciepts|)))
-	      (setf (chain this groups)
+	      (setf (chain $scope groups)
 		    (lisp (append `(return-lisp-list)
 				  (remove :NONE 
 					  (get-all-groups userid)))))
@@ -82,21 +83,28 @@
 		    (lambda (id)
 		      (setf selected (chain $scope reciepts selected))
 		      (setf cost
-			    (getprop (chain selected costs) id))
+			    (if (=== id undefined) 
+				(chain selected new-cost)
+				(getprop (chain selected costs) id)))
 		      (chain 
-		       (save-cost cost (getprop (chain selected) id))
+		       (save-cost cost (chain selected id))
 		       (success
 			(lambda(data)
 			  (chain 
 			   $scope 
 			   ($apply
 			    (lambda ()
-			      (setf (chain cost amount)
-				    (chain data 0 costs 0 amount))
+			      (when (=== id undefined)
+				(unless (getprop selected "costs")
+				  (setf (getprop selected "costs") (array)))
+				(setf (chain selected costs)
+				      (append (chain selected costs) 
+					      (chain data 0 costs 0)))
+				(delete (chain selected new-cost)))
 			      (setf (chain selected amount) 0)
 			      (dolist (c (chain selected costs))
 				(incf (chain selected amount)
-				      (chain c amount)))
+				      (parse-float (chain c amount))))
 			      (if (getprop cost "edit")
 				  (setf (getprop cost "edit") NIL)
 				  (setf (getprop cost "edit") t)))))))))))))))
@@ -155,17 +163,17 @@
 					 (getprop (chain this items) id) "selected") t))))
 		      (setf (chain |Reciepts| prototype toggle-edit-cost)
 			    (lambda(id)
-			      (if (getprop 
-				   (getprop 
-				    (chain this selected costs) 
-				    id)
-				   "edit")
-				  (setf (getprop 
-					 (getprop 
-					  (chain this selected costs) id)
-					 "edit") NIL)
-				  (setf (getprop 
-					 (getprop (chain this selected costs) id) "edit") t))))
+			      (setf cost 
+				    (if (=== id undefined)
+					(chain this selected new-cost)
+					(getprop (chain this selected costs) id)))
+			      (unless cost
+				(setf (chain this selected new-cost) 
+				      (create :groups (create)
+					      :groupslist (array)))
+				(setf cost (chain this selected new-cost)))
+			      (setf (getprop cost "edit")
+				    (if (getprop cost "edit") NIL t))))
 		      |Reciepts|)))))
 
 (defun add-reciept-ctrl (username userid)
@@ -258,18 +266,18 @@
       (for-in (k (@ cost groups))
 	      (when (getprop (chain cost groups) k)
 		(chain groups (push k))))
+      (setf data
+	    (create
+	     :ajax T
+	     :reciept-id reciept-id
+	     :amount (chain cost amount)
+	     :description (@ cost description)
+	     :groups groups
+	     :new-groups (@ cost newGroups)))
+      (when (in "id" cost)
+	(setf (getprop data "id") (chain cost id)))
       (chain $ 
-	     (post
-	      (lisp (get-page-address :add-cost))
-	      (create
-	       :ajax T
-	       :id (chain cost id)
-	       :reciept-id reciept-id
-	       :amount (chain cost amount)
-	       :description (@ cost description)
-	       :groups groups
-	       :new-groups (@ cost newGroups)))
-	      ))))
+	     (post (lisp (get-page-address :add-cost)) data)))))
 
 (defun lisp-functions (username userid)
   (ps
