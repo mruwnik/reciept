@@ -258,6 +258,12 @@
 (defun get-angular-reciepts(&key (sort-by NIL) (sort-dir NIL))
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
     (:div :ng-controller "RecieptsListCtrl" :class "reciepts"
+     (:div :class "header reciept"
+	   (:span :class "amount" "Amount")
+	   (:span :class "description" "Description")
+	   (:span :class "shop" "Shop name")
+	   (:span :class "printed" "Date of purchase")
+	   (:span :class "action" "Actions"))
      (:div 
       :infinite-scroll "reciepts.nextPage()" 
       :infinite-scroll-disabled "reciepts.busy"
@@ -275,7 +281,7 @@
 		     "{{reciept.printed | date:\"dd/MM/yyyy hh:mm\"}}") 
 	      (cl-who:fmt 
 	       (get-page-link :delete-reciept `("id" "{{reciept.id}}")
-			      "delete")))
+			      "action")))
 	(:div 
 	 :class "costs"
 	 (:div :ng-repeat "cost in reciept.costs | orderBy:costsOrder" 
@@ -321,7 +327,7 @@
 			      :ng-disabled "!(reciept.newCost.description && reciept.newCost.amount)"
 			      "save"))))
 	(:div :style "clear: both;")))
-     (:div :ng-show "reddit.busy" "Loading data...")))))
+     (:div :ng-show "reciepts.busy" "Loading data...")))))
 
 (defun get-angular-costs()
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)

@@ -7,7 +7,9 @@
       ((equal id "costs") (get-costs :userid userid :limit 2))
       ((equal id "reciepts") 
        (get-reciepts :userid userid 
-		     :limit (or (hunchentoot:get-parameter "limit") 15)
+		     :sort-by (or (hunchentoot:get-parameter "sort-by") NIL)
+		     :sort-dir (or (hunchentoot:get-parameter "sort-dir") NIL)
+		     :limit (or (hunchentoot:get-parameter "limit") 25)
 		     :offset (or (hunchentoot:get-parameter "offset") 0)))
       (t ""))))
 
