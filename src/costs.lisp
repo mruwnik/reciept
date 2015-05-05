@@ -181,6 +181,7 @@
 	    :ng-model (concatenate 'string model ".description" ))
     (:label "amount:")
     (:input :type "text" :name "amount" :value amount
+	    :ng-pattern "/^\\s*-?\\d+(?:\\.\\d{1,2})?\\s*$/"
 	    :ng-model (concatenate 'string model ".amount")) :br
     (:label "groups")
     (:div :class "group-checkboxes"
@@ -235,11 +236,14 @@
 		    (:label "description")
 		    (:input :class "cost-desc" :type "text" 
 			    :value "{{newCost.description}}" 
+			    :ng-model "newCost.description"
 			    :name "description{{newCost.id}}")
 		    (:label "amount:")
 		    (:input :class "cost-amount" :type "text" 
-			    :value "{{newCost.amount}}" 
-			    :name "amount{{newCost.id}}")
+			    :value "{{newCost.amount | number:2}}" 
+			    :name "amount{{newCost.id}}"
+			    :ng-model "newCost.amount"
+			    :ng-pattern "/^\\s*-?\\d+(?:\\.\\d{1,2})?\\s*$/")
 		    (:span :class "cost-groups" 
 			   "{{newCost.groups.join(', ')}}")
 		    (:input :type "hidden" :name "groups{{newCost.id}}"
@@ -253,7 +257,8 @@
 	     (:input :type "button" :id "add-cost" :value "add cost"
 		     :ng-click "addCost()" :ng-model "button"
 		     :ng-disabled "!(cost.description && cost.amount)")
-	     (:input :type "submit" :value " submit")))))
+	     (:input :type "submit" :value " submit" :ng-model "button"
+		     :ng-disabled "!((cost.description && cost.amount) || (newCosts && newCosts.length > 0))")))))
 
 (defun get-angular-reciepts(&key (sort-by NIL) (sort-dir NIL))
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
@@ -274,7 +279,7 @@
 	(:div :class "reciept-data"
 	      :ng-click "reciepts.toggle($index)"
 	      (:span :class "amount" 
-		     "{{reciept.amount}}{{reciept.currency}}")
+		     "{{reciept.amount | number:2}} {{reciept.currency}}")
 	      (:span :class "description" "{{reciept.description}}")
 	      (:span :class "shop" "{{reciept.shop}}")
 	      (:span :class "printed"
@@ -289,7 +294,7 @@
 	       :ng-class "{edit: cost.edit}"
 	       (:div :class "cost-data"
 		     (:span :class "description" "{{cost.description}}")
-		     (:span :class "amount" "{{cost.amount}} {{cost.currency}}")
+		     (:span :class "amount" "{{cost.amount | number:2}} {{cost.currency}}")
 		     (:span :class "groups" "{{cost.groupslist.join(', ')}}")
 		     (cl-who:fmt
 		      (get-page-link :delete-cost `("id" "{{cost.id}}") "delete"))

@@ -131,3 +131,7 @@ label.error {
 .reciepts .cost.edit .edit-cost{
     display: block;
 }
+
+input.ng-invalid-pattern {
+    border:1px solid #f00;
+}
