@@ -29,14 +29,10 @@
 (defun get-group-costs(group costs &key (function 'remove-if-not))
   "returns the sum of all costs belonging to the given group"
   (reduce #'(lambda (a b)
-	      (+ a (if (use-real-database)
-		       (amount b)
-		       (getf b :amount))))
+	      (+ a (amount b)))
 	  (remove-if-not #'(lambda (cost)
 			     (find (make-keyword group)
-				   (if (use-real-database)
-				       (get-groups cost)
-				       (getf cost :groups))))
+				   (get-groups cost)))
 			 costs)
 	  :initial-value 0))
 
@@ -108,9 +104,7 @@ function prev (getf current field), where prev is the value calculated for the p
   "returns a list of all cost groups for the given user. by default it returns all groups - to only get groups of a subset, pass the subset as the rows argument"
   (remove-duplicates
    (reduce #'(lambda (a b)
-	       (concatenate 'list a (if (use-real-database)
-					(get-groups b)
-					(getf b :groups))))
+	       (concatenate 'list a (get-groups b)))
 	   rows :initial-value ())))
 
 (defun get-user (name password)

@@ -3,5 +3,6 @@
 (defpackage #:reciept
   (:use #:cl #:parenscript)
   (:export :start-server
-	   :add-static-dir))
+	   :add-static-dir
+	   :setup-database))
 
