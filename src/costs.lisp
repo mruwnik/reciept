@@ -225,8 +225,7 @@
 		   (:input :type "text" :id "reciept-time" 
 			   :name "reciept-time"
 			   :ng-pattern "/^[012]\d?:[012345]\d$/"
-			   :value (format NIL "~2,'0d:~2,'0d"
-					  hour minute))
+			   :value "{{date | date:\"HH:mm\"}}")
 		   (:label "currency")
 		   (cl-who:fmt (get-currencies-selector)))
 	     (:div :id "reciept-costs"
