@@ -149,3 +149,6 @@ function prev (getf current field), where prev is the value calculated for the p
   (if (eq currency :YEN)
       (format NIL "~d" (round amount))
       (format NIL "~$" amount)))
+
+(defun get-default(str &optional (default NIL))
+  (if (and str (not (equal "" str))) str default))

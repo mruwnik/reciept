@@ -142,7 +142,7 @@
 		     (when (equalp "groups" (car val))
 		       (setq result (cons (make-keyword (cdr val)) result))))
 		   result)))
-     (sort-by :parameter-type #'(lambda (str) (if (equal "" str) NIL str)))
+     (sort-by :parameter-type #'(lambda (str) (if (equal "" str) NIL (make-symbol str))))
      (sort-dir :parameter-type #'(lambda (str) (if (equal "" str) NIL str))))
   (with-auth (user userid)
     (get-reciepts userid :sort-by sort-by :sort-dir sort-dir)))
@@ -259,15 +259,28 @@
 	     (:input :type "submit" :value " submit" :ng-model "button"
 		     :ng-disabled "!((cost.description && cost.amount) || (newCosts && newCosts.length > 0))")))))
 
+(defun reciept-headers()
+  (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
+    (:div :class "header reciept"
+	  (:span :class "amount" 
+;		 :ng-click "reciepts.sortColumn(\"amount\")"
+		 "Amount")
+	  (:span :class "description" 
+		 :ng-click "reciepts.sortColumn(\"description\")"
+		 "Description")
+	  (:span :class "shop"
+		 :ng-click "reciepts.sortColumn(\"shop\")"
+		 "Shop name")
+	  (:span :class "printed" 
+		 :ng-click "reciepts.sortColumn(\"printed\")"
+		 "Date of purchase")
+	  (:span :class "action" "Actions"))))
+
 (defun get-angular-reciepts(&key (sort-by NIL) (sort-dir NIL))
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)
     (:div :ng-controller "RecieptsListCtrl" :class "reciepts"
-     (:div :class "header reciept"
-	   (:span :class "amount" "Amount")
-	   (:span :class "description" "Description")
-	   (:span :class "shop" "Shop name")
-	   (:span :class "printed" "Date of purchase")
-	   (:span :class "action" "Actions"))
+	  (cl-who:fmt
+	   (reciept-headers))
      (:div 
       :infinite-scroll "reciepts.nextPage()" 
       :infinite-scroll-disabled "reciepts.busy"
@@ -365,18 +378,20 @@
 	      (cl-who:fmt 
 	       (get-page-link :delete-cost `("id" "{{cost.id}}")))))))))
 
-(defun get-reciepts(&key (userid 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))
+(defun get-reciepts(&key (userid 0) (sort-by :printed) (sort-dir "desc") (type :json) (limit NIL) (offset 0))
   (cond
-    ((equal type :angular) (get-angular-reciepts))
+    ((equal type :angular) 
+     (get-angular-reciepts :sort-by sort-by :sort-dir sort-dir))
     ((equal type :json)
      (with-output-to-string (stream)
        (cl-json:encode-json
-	`#( ,@(loop for reciept in
-		   (fill-reciepts userid 
-				  (get-user-reciepts userid 
-						     :limit limit
-						     :offset offset))
-		 collecting (to-json reciept)))
+	(mapcar 'to-json 
+		(fill-reciepts userid 
+			       (get-user-reciepts userid 
+						  :order-by sort-by
+						  :order-dir sort-dir
+						  :limit limit 
+						  :offset offset)))
 	stream)))))
 
 (defun get-costs (&key (userId 0) (sort-by NIL) (sort-dir NIL) (type :json) (limit NIL) (offset 0))

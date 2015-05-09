@@ -86,48 +86,52 @@
 
 (defmacro get-user-costs (userId &key (where NIL) 
 				   (order-by :timestamp) 
-				   (order-dir :desc)
+				   (order-dir "desc")
 				   (limit 100)
 				   (offset 0))
   "returns all costs that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
-  `(postmodern:with-connection (db-params)
-     (postmodern:query-dao 
-      'cost
-      (:limit
-       (:order-by
-	(:select '* :from 'costs
-		 :where
-		 ,(if where
-		      `(:and (:= 'userId ,userId)
-			     ,where)
-		      `(:= 'userId ,userId)))
-	  ,(if (eq :desc order-dir)
-	       `(:desc ,order-by)
-	       order-by))
-       ,limit ,offset))))
+`(if (equalp ,order-dir "desc")
+    (get-user-object 'cost 'costs ,userid 
+		     :where ,where :order-by (:desc ,order-by)
+		     :offset ,offset :limit ,limit)
+    (get-user-object 'cost 'costs ,userid 
+		     :where ,where :order-by ,order-by
+		     :offset ,offset :limit ,limit)))
 
 (defmacro get-user-reciepts (userId &key (where NIL)
 				      (order-by :printed) 
-				      (order-dir :desc)
+				      (order-dir "desc")
 				      (limit NIL)
 				      (offset 0))
   "returns all reciepts that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
+`(if (equalp ,order-dir "desc")
+    (get-user-object 'reciept 'reciepts ,userid 
+		     :where ,where :order-by (:desc ,order-by)
+		     :offset ,offset :limit ,limit)
+    (get-user-object 'reciept 'reciepts ,userid 
+		     :where ,where :order-by ,order-by
+		     :offset ,offset :limit ,limit)))
+
+(defmacro get-user-object (object table userId 
+			   &key (where NIL)
+			     (order-by :id)
+			     (limit NIL)
+			     (offset 0))
+  "return all of the specified object that belong to the given user.
+ This roundabout way is used, coz it appears that there is no decent way to insert the orderby."
   `(postmodern:with-connection (db-params)
      (postmodern:query-dao 
-      'reciept
+      ,object
       (:limit
        (:order-by
-	(:select '* :from 'reciepts
+	(:select '* :from ,table
 		 :where
 		 ,(if where
 		      `(:and (:= 'userId ,userId)
 			     ,where)
 		      `(:= 'userId ,userId)))
-	  ,(if (eq :desc order-dir)
-	       `(:desc ,order-by)
-	       order-by))
-       ,limit ,offset))))
-
+	,order-by)
+      ,limit ,offset))))
 
 (defun fill-reciepts(userid reciepts &key (order-costs :description)
 				       (order-costs-dir :desc))

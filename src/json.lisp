@@ -7,10 +7,10 @@
       ((equal id "costs") (get-costs :userid userid :limit 2))
       ((equal id "reciepts") 
        (get-reciepts :userid userid 
-		     :sort-by (or (hunchentoot:get-parameter "sort-by") NIL)
-		     :sort-dir (or (hunchentoot:get-parameter "sort-dir") NIL)
-		     :limit (or (hunchentoot:get-parameter "limit") 25)
-		     :offset (or (hunchentoot:get-parameter "offset") 0)))
+		     :sort-by (make-symbol (get-default (hunchentoot:get-parameter "sort-by") "printed"))
+		     :sort-dir (get-default (hunchentoot:get-parameter "sort-dir") "desc")
+		     :limit (get-default (hunchentoot:get-parameter "limit") 15)
+		     :offset (get-default (hunchentoot:get-parameter "offset") 0)))
       (t ""))))
 
 (setf hunchentoot:*dispatch-table*
@@ -121,8 +121,10 @@
 			      (setf (chain this items) '())
 			      (setf (chain this selected) NIL)
 			      (setf (chain this busy) false)
-			      (setf (chain this after) "")))
-		      (setf (chain |Reciepts| prototype |nextPage|)
+			      (setf (chain this after) "")
+			      (setf (chain this sort-by) NIL)
+			      (setf (chain this sort-dir) "desc")))
+		      (setf (chain |Reciepts| prototype next-page)
 			    (lambda ()
 			      (when (chain this busy) return)
 			      (setf (chain this busy) true)
@@ -133,7 +135,9 @@
 			      (chain $http 
 				     (get url 
 					  (create :params 
-						  (create  :offset offset)))
+		  			     (create :offset offset
+						     :sort-by (chain this sort-by)
+						     :sort-dir (chain this sort-dir))))
 				     (success 
 				      (chain 
 				       (lambda (data)
@@ -163,6 +167,18 @@
 					 "selected") NIL)
 				  (setf (getprop 
 					 (getprop (chain this items) id) "selected") t))))
+		      (setf (chain |Reciepts| prototype sort-column)
+			    (lambda (column dir)
+			      (setf (chain this sort-dir)
+				    (if dir dir
+					(if
+					 (and (equal (chain this sort-by) column)
+					      (equal (chain this sort-dir) "desc"))
+					   "asc" "desc")))
+			      (setf (chain this sort-by) column)
+			      (setf (chain this items) (array))
+			      (setf (chain this selected) NIL)
+			      ((chain this next-page))))
 		      (setf (chain |Reciepts| prototype toggle-edit-cost)
 			    (lambda(id)
 			      (setf cost 

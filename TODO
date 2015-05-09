@@ -1,5 +1,7 @@
 set groups for whole reciept
-sortable columns
+sortable amount column
+search
+loading notification
 
 shop autocomplete
 enter in amount adds extra cost row
