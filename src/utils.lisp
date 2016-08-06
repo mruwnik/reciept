@@ -77,7 +77,7 @@ function prev (getf current field), where prev is the value calculated for the p
                                            currency))
                      (get-this-months-costs user)))
              (total (cost-reduce user :raw-costs costs))
-             (rent (cost-reduce user :groups '(:RENT :INVESTMENTS :PODATKI) :raw-costs costs))
+             (rent (cost-reduce user :groups '(:RENT :INVESTMENTS :TAXES :LOANS) :raw-costs costs))
              (get-stat (lambda (groups)
                          (print-money currency
                                       (cost-reduce user :groups groups
@@ -85,12 +85,12 @@ function prev (getf current field), where prev is the value calculated for the p
              (without-rent (- total rent))
              (avg-cost (/ without-rent date)))
         (append
-         `(("suma wydatkow" . ,(print-money currency total))
-           ("wydatki nie stale" . ,(print-money currency without-rent))
-           ("sredni dzienny wydatek" . ,(print-money currency avg-cost)))
+         `(("total expenditures" . ,(print-money currency total))
+           ("non recurring costs" . ,(print-money currency without-rent))
+           ("avg. daily expenditure" . ,(print-money currency avg-cost)))
          (loop for comp in (get-compilations user) collecting
                                                    (cons (name comp) (funcall get-stat (read-from-string (expression comp)))))
-         `(("szacowany koszt" .
+         `(("expected cost" .
                               ,(format NIL "~a (~a)" (print-money currency (+ rent (* avg-cost (get-days-in-month month))))
                                        (print-money currency (* avg-cost (get-days-in-month month)))))
            )))))
