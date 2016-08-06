@@ -1,7 +1,7 @@
 (in-package #:reciept)
 
 ;; basic utils
-(defun make-keyword (name) 
+(defun make-keyword (name)
   "returns a keyword made out of the given string"
   (when (> (length name) 0)
     (values (intern (string-upcase (string-trim " " name)) "KEYWORD"))))
@@ -13,9 +13,9 @@
 
 (defun get-password-hash(user password)
   "returns a hash of the given password for the given user. a second value is also returned which specifies whether the resulting hash matches the users password"
-  (let ((hash (ironclad:byte-array-to-hex-string 
-	       (ironclad:digest-sequence 
-		:sha256 (flexi-streams:string-to-octets 
+  (let ((hash (ironclad:byte-array-to-hex-string
+	       (ironclad:digest-sequence
+		:sha256 (flexi-streams:string-to-octets
 			 (concatenate 'string (salt user) password))))))
     (values hash (equal hash (password user)))))
 
@@ -33,15 +33,15 @@
 
 (defun empty(&rest things)
   "checks each of the given things to see if they'ew empty. if all items are empty, then T is returned. empty things are anything that C would think of as false"
-  (every 'identity 
+  (every 'identity
 	  (mapcar #'(lambda(thing)
 		     (cond
 		       ((not thing) T)
-		       ((typep thing 'integer) 
+		       ((typep thing 'integer)
 			(= 0 thing))
 		       ((typep thing 'string)
-			(equal 0 (length 
-				  (string-trim 
+			(equal 0 (length
+				  (string-trim
 				   '(#\Space #\Tab #\Newline) thing))))
 		       (T NIL))) things)))
 
@@ -80,7 +80,7 @@
       (unless year
 	(setf year date-year))))
   (with-date
-      (:date (- (encode-universal-time 0 0 0 1 
+      (:date (- (encode-universal-time 0 0 0 1
 				(if (< month 12)
 				    (1+ month)
 				    1)
@@ -103,8 +103,8 @@
 	(time-bits (split-str time ":")))
     (encode-universal-time 0 (parse-integer (second time-bits))
 			   (parse-integer (first time-bits))
-			   (parse-integer (first date-bits)) 
-			   (parse-integer (second date-bits)) 
+			   (parse-integer (first date-bits))
+			   (parse-integer (second date-bits))
 			   (parse-integer (third date-bits)))))
 
 (defun parse-date(date)

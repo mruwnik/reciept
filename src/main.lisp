@@ -12,14 +12,14 @@
 
 (defvar *my-acceptor* nil)
 
-;;; Initialize-application 
+;;; Initialize-application
 (defun initialize-application (&key port)
 
-  ;; Set the dispatch table so easy-handler pages are served, 
+  ;; Set the dispatch table so easy-handler pages are served,
   ;; and the files in <root>/static.
   (setf hunchentoot:*dispatch-table*
         `(hunchentoot:dispatch-easy-handlers
-          ,(hunchentoot:create-folder-dispatcher-and-handler 
+          ,(hunchentoot:create-folder-dispatcher-and-handler
             "/" "/app/static/")))
 
   ;; If we are restarting, say for example when we are developing,

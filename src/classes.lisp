@@ -86,12 +86,12 @@
   (:table-name reciepts)(:keys id))
 
 (defclass cost ()
-  ((id 
+  ((id
     :initarg :id
     :reader id
     :col-type serial
     :documentation "the id of this cost")
-   (userId 
+   (userId
     :initarg :userId
     :initForm (error "must supply a userId" )
     :accessor userId
@@ -109,19 +109,19 @@
     :accessor amount
     :col-type numeric
     :documentation "the actual cost")
-   (currency 
+   (currency
     :initarg :currency
     :initForm (get-default-currency)
     :accessor currency
     :col-type integer
     :documentation "the currency of this cost")
-   (timestamp 
+   (timestamp
     :initarg :timestamp
     :initForm (simple-date:universal-time-to-timestamp (get-universal-time))
     :accessor timestamp
     :col-type timestamp
     :documentation "when this cost was added")
-   (groups 
+   (groups
     :initarg :groups
     :initForm '()
     :accessor groups

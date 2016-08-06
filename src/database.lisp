@@ -7,7 +7,7 @@
 			       (shop ""))
   (postmodern:with-connection (db-params)
     (postmodern:make-dao 'reciept :description desc
-			 :userId user :shop shop 
+			 :userId user :shop shop
 			 :printed (simple-date:universal-time-to-timestamp printed)
 			 :added (simple-date:universal-time-to-timestamp (get-universal-time)))))
 
@@ -16,15 +16,15 @@
 				   (timestamp (get-universal-time))
 				   reciept)
   (postmodern:with-connection (db-params)
-    (postmodern:with-transaction () 
-      (add-to-funds 
-       (apply 'postmodern:make-dao 'cost 
+    (postmodern:with-transaction ()
+      (add-to-funds
+       (apply 'postmodern:make-dao 'cost
 	      (append (list
-		       :userId user 
+		       :userId user
 		       :description desc
-		       :amount amount 
+		       :amount amount
 		       :timestamp (simple-date:universal-time-to-timestamp timestamp)
-		       :groups (if groups 
+		       :groups (if groups
 				   (prin1-to-string groups)
 					    "(:NONE)")
 		       :currency (get-currency-id currency)
@@ -84,35 +84,35 @@
        :salt salt
        :default-currency (get-currency-id currency)))))
 
-(defmacro get-user-costs (userId &key (where NIL) 
-				   (order-by :timestamp) 
+(defmacro get-user-costs (userId &key (where NIL)
+				   (order-by :timestamp)
 				   (order-dir "desc")
 				   (limit 100)
 				   (offset 0))
   "returns all costs that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
 `(if (equalp ,order-dir "desc")
-    (get-user-object 'cost 'costs ,userid 
+    (get-user-object 'cost 'costs ,userid
 		     :where ,where :order-by (:desc ,order-by)
 		     :offset ,offset :limit ,limit)
-    (get-user-object 'cost 'costs ,userid 
+    (get-user-object 'cost 'costs ,userid
 		     :where ,where :order-by ,order-by
 		     :offset ,offset :limit ,limit)))
 
 (defmacro get-user-reciepts (userId &key (where NIL)
-				      (order-by :printed) 
+				      (order-by :printed)
 				      (order-dir "desc")
 				      (limit NIL)
 				      (offset 0))
   "returns all reciepts that satisfy the given where clause and which belong to the given user. this is a macro so as to get by postmoderns requirements - what that really means is that the where clause has to be static"
 `(if (equalp ,order-dir "desc")
-    (get-user-object 'reciept 'reciepts ,userid 
+    (get-user-object 'reciept 'reciepts ,userid
 		     :where ,where :order-by (:desc ,order-by)
 		     :offset ,offset :limit ,limit)
-    (get-user-object 'reciept 'reciepts ,userid 
+    (get-user-object 'reciept 'reciepts ,userid
 		     :where ,where :order-by ,order-by
 		     :offset ,offset :limit ,limit)))
 
-(defmacro get-user-object (object table userId 
+(defmacro get-user-object (object table userId
 			   &key (where NIL)
 			     (order-by :id)
 			     (limit NIL)
@@ -120,7 +120,7 @@
   "return all of the specified object that belong to the given user.
  This roundabout way is used, coz it appears that there is no decent way to insert the orderby."
   `(postmodern:with-connection (db-params)
-     (postmodern:query-dao 
+     (postmodern:query-dao
       ,object
       (:limit
        (:order-by
@@ -136,13 +136,13 @@
 (defun fill-reciepts(userid reciepts &key (order-costs :description)
 				       (order-costs-dir :desc))
   "fills the given reciepts with a list of their costs"
-  (let* ((costs (get-user-costs 
+  (let* ((costs (get-user-costs
 		 userid :where
 		 (:in 'reciept (:set (mapcar 'id reciepts)))
 		 :order-by order-costs :order-dir order-costs-dir)))
     (dolist (reciept reciepts reciepts)
       (setf (costs reciept)
-	    (remove-if-not 
+	    (remove-if-not
 	     #'(lambda (cost)(= (reciept cost) (id reciept))) costs)))))
 
 (defun setup-currencies()
@@ -157,12 +157,12 @@
 			    (setf (getf result (make-keyword (second currency)))
 				  (first currency)))
 			  result)))
-	
+
 	(defun set-currencies (cur)
 	  (setf currencies cur))
 	(defun set-default-currency (currency &optional symbol)
 	  (setf default-currency currency)
-	  (when symbol 
+	  (when symbol
 	    (setf default-currency-symbol symbol)))
 	(defun get-default-currency ()
 	  default-currency)
@@ -170,16 +170,16 @@
 	  default-currency-symbol)
 	(defun get-all-currencies ()
 	  currencies)
-	
+
 	(defgeneric get-user-default-currency (user)
 	  (:documentation "returns the default currency of this user"))
 	(defmethod get-user-default-currency ((user user))
 	  (get-currency (default-currency user)))
 	(defmethod get-user-default-currency ((user integer))
-	  (get-user-default-currency 
+	  (get-user-default-currency
 	   (postmodern:with-connection (db-params)
 	     (postmodern:get-dao 'user user))))
-	
+
 	(defgeneric get-currency-id (currency)
 	  (:documentation "returns the currency id for the given object"))
 	(defmethod get-currency-id ((currency integer))
@@ -188,7 +188,7 @@
 	  (getf currencies currency))
 	(defmethod get-currency-id ((currency cost))
 	  (get-currency-id (currency currency)))
-	
+
 	(defgeneric get-currency (cost)
 	  (:documentation "get the currency with the given id"))
 	(defmethod get-currency ((cost integer))
@@ -314,7 +314,7 @@
 	      (gethash userid *user-map*))))
 
 (defun undo-last-operation(userid)
-  (dolist (obj (rest (first (gethash userid *user-map*))) 
+  (dolist (obj (rest (first (gethash userid *user-map*)))
 	   (pop (gethash userid *user-map*)))
     (restore-object userid obj)))
 
@@ -329,13 +329,13 @@
   (add-compilation (id user) name expression :order order))
 (defmethod add-compilation ((user integer) name expression &key order)
   (postmodern:with-connection (db-params)
-    (postmodern:make-dao 
-     'compilation :userId user :name name 
+    (postmodern:make-dao
+     'compilation :userId user :name name
      :expression expression
      :orderNum (if order
 		order
 		(1+ (postmodern:coalesce
-		     (postmodern:query 
+		     (postmodern:query
 		      (:select (:max 'orderNum)
 			       :from 'compilations
 			       :where (:= 'userId user))
@@ -348,7 +348,7 @@
   (get-compilations (id user)))
 (defmethod get-compilations ((user integer))
   (postmodern:with-connection (db-params)
-    (postmodern:query 
+    (postmodern:query
      (:order-by
       (:select 'id 'userId 'name 'expression 'orderNum
 	       :from 'compilations

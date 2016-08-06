@@ -23,7 +23,7 @@
 (defun get-document-root ()
   (merge-pathnames "public/" *default-pathname-defaults*))
 
-(defun database-url () 
+(defun database-url ()
   (getenv "DATABASE_URL"))
 
 (defparameter *local-db-params* (list "costs" "dan" "password" "localhost"))

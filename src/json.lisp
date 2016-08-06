@@ -5,8 +5,8 @@
     (setf (hunchentoot:content-type*) "text/javascript")
     (cond
       ((equal id "costs") (get-costs :userid userid :limit 2))
-      ((equal id "reciepts") 
-       (get-reciepts :userid userid 
+      ((equal id "reciepts")
+       (get-reciepts :userid userid
 		     :sort-by (make-symbol (get-default (hunchentoot:get-parameter "sort-by") "printed"))
 		     :sort-dir (get-default (hunchentoot:get-parameter "sort-dir") "desc")
 		     :limit (get-default (hunchentoot:get-parameter "limit") 15)
@@ -14,7 +14,7 @@
       (t ""))))
 
 (setf hunchentoot:*dispatch-table*
-	(append hunchentoot:*dispatch-table* 
+	(append hunchentoot:*dispatch-table*
 		(list (create-regex-dispatcher
 		       "^/data/(.*?)\.json$" 'json-data-handler))))
 
@@ -43,10 +43,10 @@
     ("shop" . ,(shop reciept))
     ("printed" . ,(timestamp-to-json-timestamp (printed reciept)))
     ("added" . ,(timestamp-to-json-timestamp (added reciept)))
-    ("costs" . ,(loop for cost in (costs reciept) 
+    ("costs" . ,(loop for cost in (costs reciept)
 		   collecting (to-json cost)))
     ("amount" . ,(reduce '+ (mapcar 'amount (costs reciept))))
-    ("currency" . ,(when (costs reciept) 
+    ("currency" . ,(when (costs reciept)
 			 (get-currency (first (costs reciept)))))))
 
 (hunchentoot:define-easy-handler (reciepts-controller
@@ -56,17 +56,17 @@
     (setf (hunchentoot:content-type*) "text/javascript")
     (concatenate 'string
       (ps
-	(defvar reciept-App (chain angular (module "recieptApp" 
+	(defvar reciept-App (chain angular (module "recieptApp"
 						   (array "recieptControllers" "infinite-scroll"))))
-	
-	(defvar reciept-controllers 
+
+	(defvar reciept-controllers
 	  (chain angular (module "recieptControllers" (array)))))
-      (format NIL "~%~{~a~%~}" 
-	      (loop for func in 
+      (format NIL "~%~{~a~%~}"
+	      (loop for func in
 		   '(add-reciept-ctrl tabs-ctrl
 		     costs-list-ctrl infinite-reciepts-ctrl
 		     handle-reciepts save-cost-json
-		     lisp-functions) collecting 
+		     lisp-functions) collecting
 		   (funcall func username userid)))
 	)))
 
@@ -79,28 +79,28 @@
 	      (setf (chain $scope reciepts) (new (|Reciepts|)))
 	      (setf (chain $scope groups)
 		    (lisp (append `(return-lisp-list)
-				  (remove :NONE 
+				  (remove :NONE
 					  (get-all-groups userid)))))
 	      (setf (chain $scope save-cost)
 		    (lambda (id)
 		      (setf selected (chain $scope reciepts selected))
 		      (setf cost
-			    (if (=== id undefined) 
+			    (if (=== id undefined)
 				(chain selected new-cost)
 				(getprop (chain selected costs) id)))
-		      (chain 
+		      (chain
 		       (save-cost cost (chain selected id))
 		       (success
 			(lambda(data)
-			  (chain 
-			   $scope 
+			  (chain
+			   $scope
 			   ($apply
 			    (lambda ()
 			      (when (=== id undefined)
 				(unless (getprop selected "costs")
 				  (setf (getprop selected "costs") (array)))
 				(setf (chain selected costs)
-				      (append (chain selected costs) 
+				      (append (chain selected costs)
 					      (chain data 0 costs 0)))
 				(delete (chain selected new-cost)))
 			      (setf (chain selected amount) 0)
@@ -114,9 +114,9 @@
 (defun handle-reciepts (username userid)
   (ps
     (chain reciept-Controllers
-	   (factory "Reciepts" 
+	   (factory "Reciepts"
 		    (lambda($http)
-		      (setf |Reciepts| 
+		      (setf |Reciepts|
 			    (lambda ()
 			      (setf (chain this items) '())
 			      (setf (chain this selected) NIL)
@@ -132,20 +132,20 @@
 			      (setf offset (if (chain this items)
 					       (chain this items length)
 					       0))
-			      (chain $http 
-				     (get url 
-					  (create :params 
+			      (chain $http
+				     (get url
+					  (create :params
 		  			     (create :offset offset
 						     :sort-by (chain this sort-by)
 						     :sort-dir (chain this sort-dir))))
-				     (success 
-				      (chain 
+				     (success
+				      (chain
 				       (lambda (data)
 					 (setf (chain this items)
 					       (append (chain this items) data))
-					 (setf 
+					 (setf
 					  (chain this after)
-					  (+ "t3_" 
+					  (+ "t3_"
 					     (chain
 					      (getprop
 					       (chain this items)
@@ -153,19 +153,19 @@
 					      id)))
 					 (setf (chain this busy) false))
 				       (bind this)))
-				     (error (lambda (data) 
+				     (error (lambda (data)
 					      (chain console (log data)))))))
 		      (setf (chain |Reciepts| prototype toggle)
 			    (lambda(id)
 			      (setf (chain this selected)
 				    (getprop (chain this items) id))
-			      (if (getprop 
+			      (if (getprop
 				   (getprop (chain this items) id)
 				   "selected")
-				  (setf (getprop 
+				  (setf (getprop
 					 (getprop (chain this items) id)
 					 "selected") NIL)
-				  (setf (getprop 
+				  (setf (getprop
 					 (getprop (chain this items) id) "selected") t))))
 		      (setf (chain |Reciepts| prototype sort-column)
 			    (lambda (column dir)
@@ -181,12 +181,12 @@
 			      ((chain this next-page))))
 		      (setf (chain |Reciepts| prototype toggle-edit-cost)
 			    (lambda(id)
-			      (setf cost 
+			      (setf cost
 				    (if (=== id undefined)
 					(chain this selected new-cost)
 					(getprop (chain this selected costs) id)))
 			      (unless cost
-				(setf (chain this selected new-cost) 
+				(setf (chain this selected new-cost)
 				      (create :groups (create)
 					      :groupslist (array)))
 				(setf cost (chain this selected new-cost)))
@@ -196,9 +196,9 @@
 
 (defun add-reciept-ctrl (username userid)
     (ps
-      (chain reciept-controllers 
+      (chain reciept-controllers
 	     (controller
-	      "AddRecieptCtrl" 
+	      "AddRecieptCtrl"
 	      (array "$scope"
 		     (lambda ($scope)
 		       (setf (chain $scope date) (new (|Date|)))
@@ -208,20 +208,20 @@
 		       (setf (chain $scope total)
 			     (lambda (costs)
 			       (setf total 0)
-			       (chain angular 
+			       (chain angular
 				      (|forEach| costs
-					       (lambda (cost) 
-						 (incf total 
+					       (lambda (cost)
+						 (incf total
 						       (|parseFloat| (chain cost amount))))))
 			       total))
 		       (setf (chain $scope add-cost)
-			     (lambda() 
+			     (lambda()
 			       (defvar groups
-				 (remove-if-not 
-					  (lambda(p)(getprop 
+				 (remove-if-not
+					  (lambda(p)(getprop
 						     (chain $scope cost groups) p))
-					  (chain |Object| 
-						 (keys 
+					  (chain |Object|
+						 (keys
 						  (chain $scope cost groups)))))
 			       (when (chain $scope cost new-groups)
 				 (setf groups (append groups
@@ -236,21 +236,21 @@
 					:groupsString (chain groups (join ", ")))))
 			       (delete (chain $scope cost amount))
 			       (delete (chain $scope cost description))))
-		       
+
 		       (setf (chain $scope remove-new-cost)
 			     (lambda(id)
 			       (chain $scope new-costs (splice id 1))))
-			     
+
 		       (defvar ids 1)
 		       (setf (chain $scope new-costs) (array))
-		       (setf (chain $scope cost) 
+		       (setf (chain $scope cost)
 			     (create :groups (create)))))))))
 
 (defun tabs-ctrl (username userid)
   (ps
-    (chain reciept-controllers 
+    (chain reciept-controllers
 	   (controller
-	    "TabsCtrl" 
+	    "TabsCtrl"
 	    (array "$scope"
 		   (lambda ($scope)
 		     (setf (chain  $scope tabs)
@@ -266,12 +266,12 @@
 
 (defun costs-list-ctrl (username userid)
   (ps
-    (chain reciept-controllers 
+    (chain reciept-controllers
 	   (controller
-	    "CostsListCtrl" 
+	    "CostsListCtrl"
 	    (array "$scope" "$http"
 		   (lambda ($scope $http)
-		     (chain $http 
+		     (chain $http
 			    (get (lisp (get-page-address :costs-json)))
 			    (success (lambda(data)
 				       (setf (chain $scope costs)
@@ -294,7 +294,7 @@
 	     :new-groups (@ cost newGroups)))
       (when (in "id" cost)
 	(setf (getprop data "id") (chain cost id)))
-      (chain $ 
+      (chain $
 	     (post (lisp (get-page-address :add-cost)) data)))))
 
 (defun lisp-functions (username userid)
@@ -310,14 +310,14 @@
 	(dolist (obj objs result)
 	  (unless (pred obj)
 	    (setf result (append result obj)))))
-    
+
     (defun mapcar(f objs)
       (defvar result (array))
       (dolist (obj objs result)
 	(setf result (append result (f obj)))))
-    
+
     (defun get-value(obj)
       (lambda(field)
 	(getprop obj field)))
-    
+
     (defun return-lisp-list() arguments)))

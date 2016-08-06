@@ -1,27 +1,27 @@
 (in-package #:reciept)
 
-(hunchentoot:define-easy-handler (show-stats 
+(hunchentoot:define-easy-handler (show-stats
 				  :uri (get-page-address :stats))
     ()
   (with-auth (user id)
-      (standard-page :stats 
+      (standard-page :stats
 	  '("http://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css"
-	    "/css/reciept.css") 
+	    "/css/reciept.css")
 	  '("http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
 	    "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"
 	    "http://code.highcharts.com/highcharts.js"
 	    "http://code.highcharts.com/modules/exporting.js"
 	    "/js/stats.js")
-	(:div :class "graphs" 
+	(:div :class "graphs"
 	      (cl-who:fmt (get-graphs id))))))
 
-(hunchentoot:define-easy-handler (get-graphs-handler 
+(hunchentoot:define-easy-handler (get-graphs-handler
 				  :uri (get-page-address :graphData))
     ((timestep :parameter-type 'integer :init-form 1)
      (timeunit :parameter-type 'string :init-form "day")
-     (from :parameter-type 'parse-date 
+     (from :parameter-type 'parse-date
 	   :init-form (create-date-timestamp :months -1))
-     (to :parameter-type 'parse-date 
+     (to :parameter-type 'parse-date
 	 :init-form (create-date-timestamp :months 1)))
   (with-auth (user userid)
     (let* ((timestep (* timestep
@@ -32,26 +32,26 @@
 			  ((equalp "month" timeunit) (* 60 60 24 31))
 			  ((equalp "year" timeunit) (* 60 60 24 365 ))
 			  (t (* 60 60 24)))))
-	   (rows 
+	   (rows
 	    (get-user-costs
-	     userid :where (:and (:> 'timestamp  
+	     userid :where (:and (:> 'timestamp
 				   (simple-date:universal-time-to-timestamp from))
-			       (:< 'timestamp  
+			       (:< 'timestamp
 				   (simple-date:universal-time-to-timestamp to)))
 	     :order-by 'timestamp :order-dir :asc))
 	   (groups (get-all-groups userid rows)))
       (when rows
-	(get-graph-settings 
+	(get-graph-settings
 	 (do* ((current (+ (get-uni-timestamp (first rows)) timestep)
 			(incf current timestep))
 	       (last (+ (get-uni-timestamp (first (last rows)))
 			(* 2 timestep)))
 	       (result NIL))
 	      ((> current last) result)
-	   (setf result (append result 
+	   (setf result (append result
 				`(,(with-date (:date current :day date :month month)
 					      (format NIL "~2,'0d.~2,'0d" date month))))))
-	 
+
 	 (let* ((json-data NIL)
 		(data (get-costs-over-time-by-group rows timestep groups)))
 	   (dolist (group groups json-data)
@@ -60,10 +60,10 @@
 					(:data . ,(getf data group))))))))
 	 "costs over time" "column" "cost")))))
 
-(defun get-graph-settings (categories data 
+(defun get-graph-settings (categories data
 			   graph-title graph-type yaxis-text)
   (with-output-to-string (stream)
-    (cl-json:encode-json 
+    (cl-json:encode-json
      `#( (("title" . (("text" . ,graph-title)))
 	("chart" . (("type" . ,graph-type)))
 	("xAxis" . (("id" . "1") (:categories . ,categories)))
@@ -151,7 +151,7 @@
     (when (< (getf (first rows) :timestamp) current)
       (do* ((row (pop rows) (pop rows))
 	    (groups-len (length (getf row :groups))))
-	   ((or (not (first rows)) 
+	   ((or (not (first rows))
 		(> (getf (first rows) :timestamp) current)))
 	(dolist (group (getf row :groups))
 	  (incf (getf current-list group) (/ (getf row :amount) groups-len)))))
