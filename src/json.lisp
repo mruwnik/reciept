@@ -50,25 +50,33 @@
 			 (get-currency (first (costs reciept)))))))
 
 (hunchentoot:define-easy-handler (reciepts-controller
-				  :uri (get-page-address :reciepts-controller))
+                                  :uri (get-page-address :reciepts-controller))
     ()
   (with-auth (username userid)
-    (setf (hunchentoot:content-type*) "text/javascript")
-    (concatenate 'string
-      (ps
-	(defvar reciept-App (chain angular (module "recieptApp"
-						   (array "recieptControllers" "infinite-scroll"))))
-
-	(defvar reciept-controllers
-	  (chain angular (module "recieptControllers" (array)))))
-      (format NIL "~%~{~a~%~}"
-	      (loop for func in
-		   '(add-reciept-ctrl tabs-ctrl
-		     costs-list-ctrl infinite-reciepts-ctrl
-		     handle-reciepts save-cost-json
-		     lisp-functions) collecting
-		   (funcall func username userid)))
-	)))
+             (setf (hunchentoot:content-type*) "text/javascript")
+             (concatenate
+              'string
+              (ps
+                (defvar reciept-App (chain angular (module "recieptApp"
+                                                           (array "recieptControllers" "infinite-scroll"))))
+                (defun formatted-date()
+                  (setf date (new (|Date|)))
+                  (setf date-str (chain date (|toISOString|)))
+                  (create
+                   :time (chain date-str (substring 11 16))
+                   :date (+
+                          (chain date-str (substring 8 10)) "/"
+                          (chain date-str (substring 5 7)) "/"
+                          (chain date-str (substring 0 4)))))
+                (defvar reciept-controllers
+                  (chain angular (module "recieptControllers" (array)))))
+              (format NIL "~%~{~a~%~}"
+                      (loop for func in
+                            '(add-reciept-ctrl tabs-ctrl
+                              costs-list-ctrl infinite-reciepts-ctrl
+                              handle-reciepts save-cost-json
+                              lisp-functions) collecting
+                                              (funcall func username userid))))))
 
 (defun infinite-reciepts-ctrl (username userid)
   (ps
@@ -195,56 +203,57 @@
 		      |Reciepts|)))))
 
 (defun add-reciept-ctrl (username userid)
-    (ps
-      (chain reciept-controllers
-	     (controller
-	      "AddRecieptCtrl"
-	      (array "$scope"
-		     (lambda ($scope)
-		       (setf (chain $scope date) (new (|Date|)))
-		       (setf (chain $scope groups)
-			     (lisp (append `(return-lisp-list)
-					   (reverse (remove :NONE (get-all-groups userid))))))
-		       (setf (chain $scope total)
-			     (lambda (costs)
-			       (setf total 0)
-			       (chain angular
-				      (|forEach| costs
-					       (lambda (cost)
-						 (incf total
-						       (|parseFloat| (chain cost amount))))))
-			       total))
-		       (setf (chain $scope add-cost)
-			     (lambda()
-			       (defvar groups
-				 (remove-if-not
-					  (lambda(p)(getprop
-						     (chain $scope cost groups) p))
-					  (chain |Object|
-						 (keys
-						  (chain $scope cost groups)))))
-			       (when (chain $scope cost new-groups)
-				 (setf groups (append groups
-						      (chain $scope cost new-groups))))
-			       (setf (chain $scope new-costs)
-				     (append (chain $scope new-costs)
-				       (create
-					:id (incf ids)
-					:amount (chain $scope cost amount)
-					:description (chain $scope cost description)
-					:groups groups
-					:groupsString (chain groups (join ", ")))))
-			       (delete (chain $scope cost amount))
-			       (delete (chain $scope cost description))))
+  (ps
+    (chain reciept-controllers
+           (controller
+            "AddRecieptCtrl"
+            (array "$scope"
+                   (lambda ($scope)
+                     (setf (chain $scope date) (new (|Date|)))
+                     (setf (chain $scope new-reciept) (formatted-date))
+                     (setf (chain $scope groups)
+                           (lisp (append `(return-lisp-list)
+                                         (reverse (remove :NONE (get-all-groups userid))))))
+                     (setf (chain $scope total)
+                           (lambda (costs)
+                             (setf total 0)
+                             (chain angular
+                                    (|forEach| costs
+                                               (lambda (cost)
+                                                 (incf total
+                                                       (|parseFloat| (chain cost amount))))))
+                             total))
+                     (setf (chain $scope add-cost)
+                           (lambda()
+                             (defvar groups
+                               (remove-if-not
+                                (lambda(p)(getprop
+                                           (chain $scope cost groups) p))
+                                (chain |Object|
+                                       (keys
+                                        (chain $scope cost groups)))))
+                             (when (chain $scope cost new-groups)
+                               (setf groups (append groups
+                                                    (chain $scope cost new-groups))))
+                             (setf (chain $scope new-costs)
+                                   (append (chain $scope new-costs)
+                                           (create
+                                            :id (incf ids)
+                                            :amount (chain $scope cost amount)
+                                            :description (chain $scope cost description)
+                                            :groups groups
+                                            :groupsString (chain groups (join ", ")))))
+                             (delete (chain $scope cost amount))
+                             (delete (chain $scope cost description))))
 
-		       (setf (chain $scope remove-new-cost)
-			     (lambda(id)
-			       (chain $scope new-costs (splice id 1))))
+                     (setf (chain $scope remove-new-cost)
+                           (lambda(id)
+                             (chain $scope new-costs (splice id 1))))
 
-		       (defvar ids 1)
-		       (setf (chain $scope new-costs) (array))
-		       (setf (chain $scope cost)
-			     (create :groups (create)))))))))
+                     (defvar ids 1)
+                     (setf (chain $scope new-costs) (array))
+                     (setf (chain $scope cost)
+                           (create :groups (create)))))))))
 
 (defun tabs-ctrl (username userid)
   (ps

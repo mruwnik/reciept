@@ -218,14 +218,15 @@
 		   (:label "date")
 		   (:input :type "text" :id "reciept-date"
 			   :name "reciept-date"
-			   :value "{{date | date:\"dd/MM/yyyy\"}}"
 			   :placeholder "dd/MM/yyyy"
-			   :ng-pattern "/^\d{2}/\d{2}/\d{4}$/")
+         :ng-model "newReciept.date"
+			   :ng-pattern "/^\\d{2}\\/\\d{2}\\/\\d{4}$/")
 		   (:label "time")
 		   (:input :type "text" :id "reciept-time"
 			   :name "reciept-time"
-			   :ng-pattern "/^[012]\d?:[012345]\d$/"
-			   :value "{{date | date:\"HH:mm\"}}")
+         :ng-model "newReciept.time"
+			   :ng-pattern "/^[012]\\d?:[012345]\\d$/"
+         :placeholder "HH:mm")
 		   (:label "currency")
 		   (cl-who:fmt (get-currencies-selector)))
 	     (:div :id "reciept-costs"
@@ -257,7 +258,7 @@
 		     :ng-click "addCost()" :ng-model "button"
 		     :ng-disabled "!(cost.description && cost.amount)")
 	     (:input :type "submit" :value " submit" :ng-model "button"
-		     :ng-disabled "!((cost.description && cost.amount) || (newCosts && newCosts.length > 0))")))))
+		     :ng-disabled "!((cost.description && cost.amount && newReciept.date && newReciept.time) || (newCosts && newCosts.length > 0))")))))
 
 (defun reciept-headers()
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue NIL :indent t)

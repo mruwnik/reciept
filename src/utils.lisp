@@ -44,12 +44,11 @@
         (dolist (group groups (remove-duplicates result))
           (setf result
                 (append result
-                        (funcall (if exclusive
-                                     'remove-if
-                                     'remove-if-not)
-                                 #'(lambda (cost)
-                                     (find group (get-groups cost)))
-                                 costs)))))
+                        (funcall
+                         (if exclusive 'remove-if 'remove-if-not)
+                         #'(lambda (cost)
+                             (find group (get-groups cost)))
+                         costs)))))
       costs))
 
 (defun cost-reduce(user &key (groups NIL) (function '+) (field #'amount)
