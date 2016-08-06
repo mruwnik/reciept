@@ -2,7 +2,7 @@
 
 (setf *js-string-delimiter* #\")
 
-(defparameter *pages* 
+(defparameter *pages*
   '(:start-page ("/" "" "home")
     :show-reciepts ("/reciepts" "reciepts" "reciepts")
     :show-costs ("/costs" "costs" "costs")
@@ -27,7 +27,7 @@
     :costs-json ("/data/costs.json")))
 
 (defun get-page-address (page &optional params)
-  (format NIL "~a~@[?~{~a=~(~a~)~^&~}~]" 
+  (format NIL "~a~@[?~{~a=~(~a~)~^&~}~]"
 	  (if (typep page 'symbol)
 	      (first (getf *pages* page)) page)
 	  params))
@@ -44,12 +44,12 @@
 				    :document-root doc-root)))
 (defun add-static-file (uri path)
   (setf hunchentoot:*dispatch-table*
-	(append hunchentoot:*dispatch-table* 
+	(append hunchentoot:*dispatch-table*
 		(list (hunchentoot:create-static-file-dispatcher-and-handler uri path)))))
 
 (defun add-static-dir (uri path)
   (setf hunchentoot:*dispatch-table*
-	(append hunchentoot:*dispatch-table* 
+	(append hunchentoot:*dispatch-table*
 		(list (hunchentoot:create-folder-dispatcher-and-handler uri path)))))
 
 (defun add-static-uri (uri path)
@@ -69,7 +69,7 @@
    (push (create-regex-dispatcher \"^/blog/page(\\d+)\" #'blog-page)
          tbnl:*dispatch-table*)
 
-   When the url blog/page5 is accessed, blog-page is called with pagenum 
+   When the url blog/page5 is accessed, blog-page is called with pagenum
    set to 5."
   (let ((scanner (cl-ppcre:create-scanner regex)))
     (lambda (request)
@@ -87,9 +87,9 @@
 (defun redirect(page &rest params)
   "returns a redirect to the given page. params are pairs of name value.
 eg. (redirect \"home\" param1 bla param2 ble)"
-  (hunchentoot:redirect 
+  (hunchentoot:redirect
    (format NIL "~a~@[?~{~a=~(~a~)~^&~}~]~@[~:*~:[?~;&~]~a~]"
-	   (get-page-address page) 
+	   (get-page-address page)
 	   params (hunchentoot:query-string hunchentoot:*request*))))
 
 
@@ -103,7 +103,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
     (:div :ng-controller "TabsCtrl"
      :class "tabs-container"
-     (:div 
+     (:div
       :class "tabs"
       (do* ((tabs tabs (rest tabs))
 	    (tab (first tabs) (first tabs))
@@ -114,7 +114,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	       :ng-class (format NIL "{active: tabs[~a].selected}" id)
 	       :ng-click (format NIL "showTab(~a)" id)
 	       :id (format NIL "tab~a" id) (cl-who:fmt (first tab))))))
-     (:div 
+     (:div
       :class "tabs-contents"
       (do* ((tabs tabs (rest tabs))
 	    (tab (first tabs) (first tabs))
@@ -145,15 +145,15 @@ eg. (redirect \"home\" param1 bla param2 ble)"
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
     (:form :action (get-page-address (if new-user :new-account :login))
 	   :method "POST"
-	   (when error 
+	   (when error
 	     (cl-who:htm (:div :class "error" (cl-who:fmt error))))
 	   (:label "username:")
 	   (:input :type "text" :name "username") :br
-	   (:label "password:") 
+	   (:label "password:")
 	   (:input :type "password" :name "password") :br
 	   (when new-user
-	     (cl-who:htm 
-	      (:label "confirm password:") 
+	     (cl-who:htm
+	      (:label "confirm password:")
 	      (:input :type "password" :name "confirm-password") :br
 	      (:label "default currency")
 	      (:select :name "currency"
@@ -166,14 +166,14 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 			(:option :value currency :selected "selected"
 				 (cl-who:fmt (princ-to-string currency))))
 		       (cl-who:htm
-			(:option :value currency 
+			(:option :value currency
 				 (cl-who:fmt (princ-to-string currency)))))))))
-	   (:input :type "submit" :value 
+	   (:input :type "submit" :value
 		   (if new-user "create account" "log in"))
 	   (when redirect
 	     (cl-who:htm (:input :type "hidden" :name "redirect"
 		   :value redirect))))
-    (:div 
+    (:div
      (unless new-user
        (cl-who:fmt (get-page-link :new-account `("redirect" ,redirect)))))))
 
@@ -189,19 +189,19 @@ eg. (redirect \"home\" param1 bla param2 ble)"
   (let ((script-name (gensym)))
 	 `(cl-who:with-html-output-to-string (*standard-output* nil :prologue t :indent t)
 	   (:html :xmlns "http://www.w3.org/1999/xhtml"
-		  :xml\:lang "en" 
+		  :xml\:lang "en"
 		  :lang "en"
 		  :ng-app "recieptApp"
-		  (:head 
-		   (:meta :http-equiv "Content-Type" 
+		  (:head
+		   (:meta :http-equiv "Content-Type"
 			  :content    "text/html;charset=utf-8")
 		   (:title (get-page-title ,page))
 		   (dolist (,script-name ,css)
 		     (cl-who:htm
-		      (:link :type "text/css" 
+		      (:link :type "text/css"
 			     :rel "stylesheet"
 			     :href ,script-name))))
-		  (:body 
+		  (:body
 		   (cl-who:fmt (make-menu ,page))
 		   ,@body
 		   (dolist (,script-name ,scripts)
@@ -212,26 +212,26 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 (defun make-menu (page)
   (cl-who:with-html-output-to-string (*standard-output* nil :prologue t :indent t)
     (:div :id "header"
-	  (:div :class "right" 
+	  (:div :class "right"
 		(hunchentoot:start-session)
 		(cl-who:fmt
 		 (if (hunchentoot:session-value :userId)
 		     (make-link (get-page-address :logout) "logout")
 		     (make-link (get-page-address :login) "login"))))
 	   (dolist (link '(:stats :show-costs))
-	    (cl-who:htm 
-	     (:div :class (format NIL "right~:[~; current-page~]" 
+	    (cl-who:htm
+	     (:div :class (format NIL "right~:[~; current-page~]"
 				  (eq link page))
 		   (cl-who:fmt (get-page-link link))))))))
 
-(hunchentoot:define-easy-handler (undo-handler 
+(hunchentoot:define-easy-handler (undo-handler
 				  :uri (get-page-address :undo))
     ()
   (with-auth (user userid)
      (undo-last-operation userid))
   (redirect  :start-page))
 
-(hunchentoot:define-easy-handler (login-handler 
+(hunchentoot:define-easy-handler (login-handler
 				  :uri (get-page-address :login))
       ((username :request-type :post :parameter-type 'string)
        (password :request-type :post :parameter-type 'string)
@@ -246,24 +246,24 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	  (hunchentoot:redirect (if redirect redirect (get-page-address :start-page))))
 	(show-login-screen redirect "wrong user or password"))))
 
-(hunchentoot:define-easy-handler (add-user-handler 
+(hunchentoot:define-easy-handler (add-user-handler
 				  :uri (get-page-address :new-account))
     ((username :request-type :post :parameter-type 'string)
      (password :request-type :post :parameter-type 'string)
      (confirm-password :request-type :post :parameter-type 'string)
      (redirect :parameter-type 'string)
-     (currency :request-type :post 
+     (currency :request-type :post
 	       :init-form (get-currency (get-default-currency))
 	       :parameter-type 'keyword))
   (if (eq :POST (hunchentoot:request-method hunchentoot:*request*))
-    (cond 
+    (cond
       ((or (not username) (<= (length username) 0) (string= "" username))
        (show-login-screen redirect "the user name is required" T))
       ((not (equal password confirm-password))
        (show-login-screen redirect "passwords don't match" T))
       ((check-if-user-exists username)
        (show-login-screen redirect "the user name is already taken" T))
-      (t 
+      (t
        (let ((user (add-user username password currency)))
 	 (hunchentoot:start-session)
 	 (setf (hunchentoot:session-value :userId) (id user))
@@ -271,20 +271,20 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	 (hunchentoot:redirect (if redirect redirect (get-page-address :start-page))))))
     (show-login-screen redirect "" T)))
 
-(hunchentoot:define-easy-handler (logout-handler 
+(hunchentoot:define-easy-handler (logout-handler
 				  :uri (get-page-address :logout))
     ()
   (hunchentoot:start-session)
   (hunchentoot:delete-session-value :userId)
   (redirect  :start-page))
 
-(hunchentoot:define-easy-handler (get-spending-stats-handler 
+(hunchentoot:define-easy-handler (get-spending-stats-handler
 				  :uri (get-page-address :spending-stats))
     ((currency :parameter-type 'make-keyword))
   (with-auth (username userid)
     (with-output-to-string (stream)
       (cl-json:encode-json
-       `#( (("currency-id" . ,currency) 
+       `#( (("currency-id" . ,currency)
 	    ("currency" . ,(get-currency currency))
 	    ("values" . ,(mapcar #'(lambda(item)`(("name" . ,(first item))
 			 ("data" . ,(rest item))))
@@ -296,8 +296,8 @@ eg. (redirect \"home\" param1 bla param2 ble)"
     (:div :class "stats-container"
      (:div :class "total-amount" :style "float: left; margin-right: 50px"
 	   (dolist (fund (get-funds user))
-	     (cl-who:htm 
-	      (:span :class "fund-amount" 
+	     (cl-who:htm
+	      (:span :class "fund-amount"
 		     :id (format NIL "amount-~(~a~)" (getf fund :currency))
 		     (cl-who:fmt (print-money (getf fund :currency)
 					      (getf fund :amount))))
@@ -310,19 +310,19 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 				 (* (getf fund :amount)
 				    (getf conversions (getf fund :currency))))) ")" ))))))
      (:div :class "spending-info"
-	   (dolist (stat (apply 'get-spending-statistics 
+	   (dolist (stat (apply 'get-spending-statistics
 				(append (list user) currency)))
-	     (cl-who:htm 
-	      (:div :class "info" (cl-who:fmt 
-				   (format NIL "~a: ~{~a~^, ~}" 
+	     (cl-who:htm
+	      (:div :class "info" (cl-who:fmt
+				   (format NIL "~a: ~{~a~^, ~}"
 					   (first stat) (list (rest stat))))))))
      (:div :class "change-currency"
 	   (cl-who:fmt (apply 'get-currencies-selector
 			      (when currency currency)))))))
 
-(defun get-currencies-selector(&optional 
-				 (default-currency-id (default-currency 
-						       (get-current-user 
+(defun get-currencies-selector(&optional
+				 (default-currency-id (default-currency
+						       (get-current-user
 							hunchentoot:*request*))))
   (cl-who:with-html-output-to-string (*standard-output* nil :indent t)
     (:select :name "currency"
@@ -334,7 +334,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 		    (:option :value currency :selected "selected"
 			     (cl-who:fmt (princ-to-string currency))))
 		   (cl-who:htm
-		     (:option :value currency 
+		     (:option :value currency
 			      (cl-who:fmt (princ-to-string currency)))))))))
 
 (defun edit-operation-result(userid reciept-ids costs currency)
@@ -345,7 +345,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
 	  ("reciepts" . ,reciept-ids)
 	  ("amount" . ,(when costs
 	     `(("total-amount" . ,(getf
-				   (get-funds userid 
+				   (get-funds userid
 					      (get-currency currency))
 				   :amount))
 	       ("currency" . ,currency))))
@@ -353,11 +353,11 @@ eg. (redirect \"home\" param1 bla param2 ble)"
      stream)))
 
 
-(hunchentoot:define-easy-handler (start-page-handler 
+(hunchentoot:define-easy-handler (start-page-handler
 				  :uri (get-page-address :start-page))
     ((view :init-form :show-reciepts :parameter-type 'keyword))
   (with-auth (username userid)
-    (standard-page view 
+    (standard-page view
 	'("/css/reciept.css")
 	`("http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"
 	  "http://code.jquery.com/ui/1.10.3/jquery-ui.min.js"
@@ -368,7 +368,7 @@ eg. (redirect \"home\" param1 bla param2 ble)"
       (cl-who:fmt (get-add-reciept-form))
       :br :br
       (cl-who:fmt
-       (make-link (get-page-address :undo) 
+       (make-link (get-page-address :undo)
 		  (get-page-link-name :undo)
 		  (unless (> (avaiable-undos userid) 0) "hidden")
 		  "undo-link"))

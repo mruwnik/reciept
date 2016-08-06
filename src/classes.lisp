@@ -1,12 +1,12 @@
 (in-package #:reciept)
 
 (defclass user ()
-  ((id 
+  ((id
     :initarg :id
     :reader id
     :col-type serial
     :documentation "the id of this user")
-   (name 
+   (name
     :initarg :name
     :initForm (error "must supply a userName" )
     :accessor name
@@ -24,13 +24,13 @@
     :accessor salt
     :col-type varchar
     :documentation "this users password salt")
-   (defaultCurrency 
+   (defaultCurrency
     :initarg :default-currency
     :initForm (get-default-currency)
     :accessor default-currency
     :col-type integer
     :documentation "the default currency of this cost")
-   (created 
+   (created
     :initarg :created
     :initForm (simple-date:universal-time-to-timestamp (get-universal-time))
     :accessor created
@@ -41,12 +41,12 @@
   (:table-name users)(:keys id))
 
 (defclass reciept ()
-  ((id 
+  ((id
     :initarg :id
     :reader id
     :col-type serial
     :documentation "the id of this reciept")
-   (userId 
+   (userId
     :initarg :userId
     :initForm (error "must supply a userId" )
     :accessor userId

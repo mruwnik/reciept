@@ -32,54 +32,54 @@
 		      (when id `(:id ,id))))))))
 
 (defun edit-cost(id desc amount &key groups user reciept
-				   currency timestamp)
+                                  currency timestamp)
   (postmodern:with-connection (db-params)
-    (postmodern:with-transaction () 
+    (postmodern:with-transaction ()
       (let ((cost (postmodern:get-dao 'cost id)))
-	(when cost
-	  (when user
-	    (setf (user cost) user))
-	  (setf (description cost) desc)
-	  (deduct-from-funds cost)
-	  (setf (amount cost) amount)
-	  (when reciept
-	    (setf (reciept cost) reciept))
-	  (when groups
-	    (setf (groups cost) 
-		  (prin1-to-string 
-		   (if (and (= 1 (length groups))
-			    (equal :NONE (first groups)))
-		       groups 
-		       (remove :NONE groups)))))
-	  (when currency
-	    (setf (currency cost) (get-currency-id currency)))
-	  (when timestamp
-	    (setf (timestamp cost) timestamp))
-	  
-	  (handler-case 
-	      (progn
-		(postmodern:update-dao cost)
-		(add-to-funds cost)
-		cost)
-	    (cl-postgres:database-error (se) 
-	      (postmodern:delete-dao cost)
-	      (add-cost 
-	       (description cost) (amount cost) (userid cost)
-	       :groups (get-groups cost) :currency (currency cost)
-	       :timestamp (simple-date:timestamp-to-universal-time
-			   (timestamp cost))
-	       :reciept (reciept cost)
-	       :id (id cost)))))))))
+        (when cost
+          (when user
+            (setf (user cost) user))
+          (setf (description cost) desc)
+          (deduct-from-funds cost)
+          (setf (amount cost) amount)
+          (when reciept
+            (setf (reciept cost) reciept))
+          (when groups
+            (setf (groups cost)
+                  (prin1-to-string
+                   (if (and (= 1 (length groups))
+                            (equal :NONE (first groups)))
+                       groups
+                       (remove :NONE groups)))))
+          (when currency
+            (setf (currency cost) (get-currency-id currency)))
+          (when timestamp
+            (setf (timestamp cost) timestamp))
+
+          (handler-case
+              (progn
+                (postmodern:update-dao cost)
+                (add-to-funds cost)
+                cost)
+            (cl-postgres:database-error (se)
+              (postmodern:delete-dao cost)
+              (add-cost
+               (description cost) (amount cost) (userid cost)
+               :groups (get-groups cost) :currency (currency cost)
+               :timestamp (simple-date:timestamp-to-universal-time
+                           (timestamp cost))
+               :reciept (reciept cost)
+               :id (id cost)))))))))
 
 (defun add-user (name password currency)
   "adds a new user. a salt is automaticly generated and used to hash the given password"
   (let ((salt (random-password 15)))
     (postmodern:with-connection (db-params)
-      (postmodern:make-dao 
-       'user :name name 
-       :password (ironclad:byte-array-to-hex-string 
-		  (ironclad:digest-sequence 
-		   :sha256 (flexi-streams:string-to-octets 
+      (postmodern:make-dao
+       'user :name name
+       :password (ironclad:byte-array-to-hex-string
+		  (ironclad:digest-sequence
+		   :sha256 (flexi-streams:string-to-octets
 			    (concatenate 'string salt password))))
        :salt salt
        :default-currency (get-currency-id currency)))))
@@ -199,7 +199,7 @@
 	  (if (numberp (currency cost))
 	      (get-currency (currency cost))
 	      (currency cost)))))))
-    
+
 (defgeneric delete-cost (userid cost)
   (:documentation "deletes the given cost and automaticly refreshes the amount of avaiable funds"))
 (defmethod delete-cost (userid (cost cost))
@@ -224,9 +224,9 @@
     reciept))
 (defmethod delete-reciept (userid (reciept integer))
   (postmodern:with-connection (db-params)
-    (delete-reciept userid 
-		    (first (fill-reciepts 
-			    userid 
+    (delete-reciept userid
+		    (first (fill-reciepts
+			    userid
 			    (list (postmodern:get-dao 'reciept reciept)))))))
 
 ;;; funds utils
@@ -235,7 +235,7 @@
 (defmethod get-funds ((user user) &optional currency)
   (postmodern:with-connection (db-params)
     (let ((result '()))
-      (dolist (fund (postmodern:query 
+      (dolist (fund (postmodern:query
 		     (:select 'currency 'amount :from 'funds
 			      :where (:= 'userId (id user))))
 	       result)
@@ -243,7 +243,7 @@
 	  (push `(:currency ,(get-currency (first fund))
 			    :amount ,(second fund)) result)))
       (if (not currency)
-	  result 
+	  result
 	  (dolist (fund result)
 	    (when (equal (getf fund :currency) (get-currency currency))
 	      (return fund)))))))
@@ -258,20 +258,20 @@
   (postmodern:with-connection (db-params)
     (when (eq :- operation)
       (setf (amount cost) (- (amount cost))))
-    (let ((result (postmodern:query (:update 'funds 
-			       :set 'amount (:+ 'amount (amount cost))
-			       :where (:and (:= 'userId (userId cost))
-					    (:= 'currency (get-currency-id cost)))
-			       :returning 'amount))))
+    (let ((result (postmodern:query (:update 'funds
+                                     :set 'amount (:+ 'amount (amount cost))
+                                     :where (:and (:= 'userId (userId cost))
+                                                  (:= 'currency (get-currency-id cost)))
+                                     :returning 'amount))))
       (when (eq :- operation)
-	(setf (amount cost) (- (amount cost))))
+        (setf (amount cost) (- (amount cost))))
       (unless result
-	  (postmodern:query 
-	   (:insert-into 'funds :set 
-			 'id (:+ 1 (:select (:max 'id) :from 'funds))
-			 'userId (userId cost) 
-			 'amount (amount cost) 
-			 'currency (get-currency-id cost))))))
+        (postmodern:query
+         (:insert-into 'funds :set
+                       'id (:+ 1 (:coalesce (:select (:max 'id) :from 'funds) 0))
+                       'userId (userId cost)
+                       'amount (amount cost)
+                       'currency (get-currency-id cost))))))
   cost)
 
 (defmethod modify-funds ((cost integer) operation)
