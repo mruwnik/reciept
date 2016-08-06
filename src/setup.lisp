@@ -26,7 +26,7 @@
 (defun database-url () 
   (getenv "DATABASE_URL"))
 
-(defparameter *local-db-params* (list "costs" "dan" "password" "localhost"))
+(defparameter -db-params* (list "costs" "dan" "password" "localhost"))
 
 (defun db-params ()
   "Heroku database url format is postgres://username:password@host/database_name. If we are testing on localhost, use the db-parameters from *local-db-params*."

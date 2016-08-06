@@ -13,11 +13,11 @@
     (unless (postmodern:table-exists-p "reciepts")
       (postmodern:execute (postmodern:dao-table-definition 'reciept)))
     (unless (postmodern:table-exists-p "funds")
-      (postmodern:query 
+      (postmodern:query
        (:create-table funds
 		      ((id :type integer :primary-key t)
 		       (userId :type integer :references (users :cascade :cascade))
-		       (currency :type int4 :references (currencies :cascade :cascade)) 
+		       (currency :type int4 :references (currencies :cascade :cascade))
 		       (amount :type numeric :default 0)))))
     (unless (postmodern:table-exists-p "costs")
       (postmodern:with-connection (db-params)
@@ -47,19 +47,19 @@
   (let ((id-name (gensym)))
     `(let ((,id-name ,id))
        (unless (postmodern:query (:select '* :from 'changelog
-			     :where (:and 
+			     :where (:and
 				     (:= 'id ,id-name)
 				     (:= 'status 1))))
-	 (handler-case 
+	 (handler-case
 	     (progn ,operation
-		(postmodern:query 
+		(postmodern:query
 		 (:insert-into 'changelog :set
 			       'id ,id-name
 			       'operation ,(princ-to-string operation)
 			       'time (simple-date:universal-time-to-timestamp (get-universal-time))
 			       'status 1)))
-	   (postmodern:database-error (e) 
-	     (print (concatenate 'string 
+	   (postmodern:database-error (e)
+	     (print (concatenate 'string
 				 "db change: change "
 				 ,id " caused error: "
 				 (format NIL "~A" e)))))))))
@@ -76,23 +76,21 @@
 		       (operation :type varchar)
 		       (time :type timestamp)
 		       (status :type smallint)))))
-    
+
     ;; db changes of the following format:
     ;;   (modify-db
     ;;     "<id>"
     ;;     (opertation))
-    
+
     (modify-db
      "1307-20140310"
      (progn
-       (postmodern:query 
-	(:create-unique-index 'userNameIdx
-			      :on users :fields name))
-       (postmodern:query 
-	(:create-index 'costsUserIdx
-		       :on costs :fields userid reciept))))
-    
-   ; add a compilation table to hold user defined compilations 
+       (postmodern:query
+        (:create-unique-index 'userNameIdx&aux :on users :fields name))
+       (postmodern:query
+        (:create-index 'costsUserIdx :on costs :fields userid reciept))))
+
+   ; add a compilation table to hold user defined compilations
     (modify-db
      "1151-20150423"
      (unless (postmodern:table-exists-p "compilations")
