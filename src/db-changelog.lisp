@@ -9,7 +9,12 @@
       (postmodern:query
        (:create-table currencies
 		      ((id :type int4 :primary-key t)
-		       (name :type varchar :unique t)))))
+		       (name :type varchar :unique t))))
+      ; insert the initial currencies
+      (postmodern:query
+       (:insert-rows-into 'currencies
+           :columns 'id 'name
+           :values '((1 "YEN") (2 "USD") (3 "GBP") (4 "PLN") (5 "EUR")))))
     (unless (postmodern:table-exists-p "reciepts")
       (postmodern:execute (postmodern:dao-table-definition 'reciept)))
     (unless (postmodern:table-exists-p "funds")
@@ -80,7 +85,7 @@
     ;; db changes of the following format:
     ;;   (modify-db
     ;;     "<id>"
-    ;;     (opertation))
+    ;;     (operation))
 
     (modify-db
      "1307-20140310"
@@ -95,5 +100,3 @@
      "1151-20150423"
      (unless (postmodern:table-exists-p "compilations")
        (postmodern:execute (postmodern:dao-table-definition 'compilation))))))
-
-
