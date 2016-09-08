@@ -9,7 +9,7 @@
        (get-reciepts :userid userid
 		     :sort-by (make-symbol (get-default (hunchentoot:get-parameter "sort-by") "printed"))
 		     :sort-dir (get-default (hunchentoot:get-parameter "sort-dir") "desc")
-		     :limit (get-default (hunchentoot:get-parameter "limit") 15)
+		     :limit (get-default (hunchentoot:get-parameter "limit") 20)
 		     :offset (get-default (hunchentoot:get-parameter "offset") 0)))
       (t ""))))
 

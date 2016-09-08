@@ -9,10 +9,10 @@ BACKUP_DIR = 'backups/'
 
 def get_backups():
     """Get a list of all backups."""
-    backups = re.findall(
+    backups = sorted(re.findall(
         '\n(\w+)\s+\d{4}-\d{2}-\d{2}',
         subprocess.check_output(['heroku', 'pg:backups', '--app', 'desolate-anchorage-3504'])
-    )
+    ))
     print 'found:', ', '.join(backups)
     return backups
 
@@ -26,7 +26,7 @@ def download_backup(backup):
     print 'downloading', backup_url
     # download the new dump and save it in the backups folder
     downloader = urllib.URLopener()
-    downloader.retrieve(backup_url, BACKUP_DIR + datetime.now().strftime('%Y-%m-%d') + ".dump")
+    downloader.retrieve(backup_url, BACKUP_DIR + datetime.now().strftime('%Y-%m-%d') + '-' + backup + ".dump")
 
 
 # remove all backups apart from the last one
