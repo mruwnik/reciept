@@ -15,3 +15,7 @@ GRANT ALL PRIVILEGES ON DATABASE costs to dan;
 ```
 * start the application: `sbcl --load reciept.lisp`
 
+
+# Users
+
+user passwords are simply (sha256 (concatenate 'string salt password))
